@@ -12,3 +12,8 @@ Session 5 — README + AGENTS.md
 README updated: three → four agents, diagram and table corrected.
 AGENTS.md fully regenerated: now reflects real modules, pipeline stages,
 timeout behaviour, and actual ThreadPoolExecutor mechanism.
+watsonx integration — all 4 agents
+All 4 specialist agents now support real LLM-powered review via WatsonxClient
+(meta-llama/llama-3-3-70b-instruct). Deterministic fallback preserved for tests.
+Security agent tested against SQL injection fixture — correctly returned REJECT.
+155 tests still passing.
