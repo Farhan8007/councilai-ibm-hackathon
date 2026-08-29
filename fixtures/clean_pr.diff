@@ -1,0 +1,8 @@
+diff --git a/utils.py b/utils.py
+index 0000000..1111111 100644
+--- a/utils.py
++++ b/utils.py
+@@ -0,0 +1,4 @@
++def format_name(first, last):
++    """Return formatted full name."""
++    return f"{first.strip()} {last.strip()}"
