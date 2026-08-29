@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CouncilAI: Multi-Agent Code Review System Architecture</title>
+  <style>
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      --bg-accent: #f0f3ff;
+      --surface-1: #ffffff;
+      --surface-2: #f8f9fa;
+      --border: #d9d9d9;
+      --border-strong: #b3b3b3;
+      --border-accent: #4f46e5;
+      --text-primary: #1a1a1a;
+      --text-secondary: #595959;
+      --text-muted: #8c8c8c;
+      --text-accent: #4f46e5;
+      --radius: 6px;
+      --on-accent: #ffffff;
+      --fill-accent: #4f46e5;
+      --bg-success: #dcfce7;
+      --text-success: #166534;
+      --bg-danger: #fee2e2;
+      --text-danger: #991b1b;
+      --bg-warning: #fef3c7;
+      --text-warning: #92400e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: #fafafa;
+      color: var(--text-primary);
+      padding: 20px;
+    }
+
+    .aw {
+      padding: 0.5rem 0 1.25rem;
+      font-family: var(--font-sans);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .sl {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 0 0 5px;
+    }
+
+    .tr {
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 12px;
+      flex-wrap: wrap;
+    }
+
+    .da {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 22px;
+      margin: 3px 0;
+    }
+
+    .da::before {
+      content: '';
+      width: 1px;
+      height: 14px;
+      background: var(--border-strong);
+    }
+
+    .da::after {
+      content: '▾';
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1;
+    }
+
+    .ha {
+      color: var(--text-muted);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      padding-bottom: 2px;
+    }
+
+    .cn {
+      background: var(--surface-2);
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 10px 10px 8px;
+      cursor: pointer;
+      text-align: center;
+      flex: 1;
+      min-width: 90px;
+      max-width: 175px;
+      transition: border-color 0.12s, background 0.12s;
+    }
+
+    .cn:hover {
+      border-color: var(--border-accent);
+      background: var(--surface-1);
+    }
+
+    .cn.act {
+      border: 1px solid var(--text-accent);
+      background: var(--bg-accent);
+    }
+
+    .nt {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .ns {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+      line-height: 1.3;
+    }
+
+    .cb {
+      margin: 12px 12px 0;
+      border: 1px dashed var(--border-accent);
+      border-radius: 12px;
+      padding: 8px 8px 10px;
+      position: relative;
+    }
+
+    .cl {
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface-2);
+      border: 0.5px solid var(--border-accent);
+      color: var(--text-accent);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 1px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .ag {
+      background: var(--bg-accent);
+      border-color: var(--border-accent);
+    }
+
+    .ag:hover {
+      background: var(--surface-1);
+      border-color: var(--text-accent);
+    }
+
+    .jb {
+      margin: 12px 12px 0;
+      border: 1.5px solid var(--border-accent);
+      border-radius: 12px;
+      padding: 10px 8px 10px;
+      position: relative;
+      background: var(--bg-accent);
+    }
+
+    .jl {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--fill-accent);
+      color: var(--on-accent);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 14px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .jc {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-accent);
+      margin-bottom: 8px;
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    .ji {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .jn {
+      flex: 1;
+      min-width: 110px;
+      max-width: 150px;
+      background: var(--surface-2);
+      border: 0.5px solid var(--border-accent);
+      border-radius: var(--radius);
+      padding: 8px 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.12s, background 0.12s;
+    }
+
+    .jn:hover {
+      border-color: var(--text-accent);
+      background: var(--surface-1);
+    }
+
+    .jn.act {
+      border: 1px solid var(--text-accent);
+      background: var(--surface-1);
+    }
+
+    .jt {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .js {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      line-height: 1.3;
+    }
+
+    .vr {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 0 12px;
+      padding: 10px 14px;
+      background: var(--surface-1);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      flex-wrap: wrap;
+      cursor: pointer;
+      transition: border-color 0.12s;
+    }
+
+    .vr:hover {
+      border-color: var(--border-accent);
+    }
+
+    .vr.act {
+      border: 1px solid var(--text-accent);
+      background: var(--bg-accent);
+    }
+
+    .vtl {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .vb {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 11px;
+      border-radius: 20px;
+    }
+
+    .va {
+      background: var(--bg-success);
+      color: var(--text-success);
+    }
+
+    .vd {
+      background: var(--bg-danger);
+      color: var(--text-danger);
+    }
+
+    .vw {
+      background: var(--bg-warning);
+      color: var(--text-warning);
+    }
+
+    .dp {
+      margin: 12px 12px 0;
+      padding: 14px 16px;
+      background: var(--surface-1);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .dp.lit {
+      border-color: var(--border-accent);
+    }
+
+    .dpt {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .dpb {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    .dptg {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .dtg {
+      font-size: 11px;
+      padding: 2px 9px;
+      border-radius: 20px;
+      background: var(--surface-2);
+      border: 0.5px solid var(--border-strong);
+      color: var(--text-secondary);
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      font-size: 24px;
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+<body>
+  <h2>CouncilAI: Multi-Agent Code Review System Architecture</h2>
+  <p style="text-align: center; color: var(--text-muted); margin-bottom: 20px; font-size: 13px;">Click any component to explore the system</p>
+
+  <div class="aw">
+
+    <p class="sl">Ingestion</p>
+    <div class="tr">
+      <div class="cn" id="n-webhook" onclick="s('webhook')"><div class="nt">PR webhook</div><div class="ns">GitHub / GitLab events</div></div>
+      <div class="ha">→</div>
+      <div class="cn" id="n-diffparser" onclick="s('diffparser')"><div class="nt">Diff parser</div><div class="ns">Extract changed files</div></div>
+      <div class="ha">→</div>
+      <div class="cn" id="n-classifier" onclick="s('classifier')"><div class="nt">Change classifier</div><div class="ns">Auth / perf / security type</div></div>
+    </div>
+
+    <div class="da"></div>
+
+    <p class="sl">Agent council</p>
+    <div class="cb">
+      <span class="cl">Parallel IBM watsonx subagents</span>
+      <div class="tr" style="margin-top:6px">
+        <div class="cn ag" id="n-security" onclick="s('security')"><div class="nt">Security agent</div><div class="ns">Vulns, secrets, auth</div></div>
+        <div class="cn ag" id="n-architecture" onclick="s('architecture')"><div class="nt">Architecture agent</div><div class="ns">Patterns, coupling</div></div>
+        <div class="cn ag" id="n-testing" onclick="s('testing')"><div class="nt">Testing agent</div><div class="ns">Coverage, edge cases</div></div>
+        <div class="cn ag" id="n-performance" onclick="s('performance')"><div class="nt">Performance agent</div><div class="ns">Complexity, scale</div></div>
+      </div>
+    </div>
+
+    <div class="da"></div>
+
+    <p class="sl">Conflict detection</p>
+    <div class="cb">
+      <span class="cl">Evidence synthesis & weighting</span>
+      <div class="tr" style="margin-top:6px">
+        <div class="cn ag" id="n-aggregator" onclick="s('aggregator')"><div class="nt">Opinion aggregator</div><div class="ns">Collect verdicts</div></div>
+        <div class="cn ag" id="n-detector" onclick="s('detector')"><div class="nt">Conflict detector</div><div class="ns">Divergence scoring</div></div>
+        <div class="cn ag" id="n-severity" onclick="s('severity')"><div class="nt">Severity classifier</div><div class="ns">Risk level assignment</div></div>
+      </div>
+    </div>
+
+    <div class="da"></div>
+
+    <p class="sl">Evidence judge</p>
+    <div class="jb">
+      <span class="jl">Weighted meta-reasoning</span>
+      <div class="jc">(re-ranks agent opinions by relevance, confidence, and precedent)</div>
+      <div class="ji">
+        <div class="jn" id="n-relevance" onclick="s('relevance')"><div class="jt">Relevance weighter</div><div class="js">By change type</div></div>
+        <div class="jn" id="n-confidence" onclick="s('confidence')"><div class="jt">Confidence scorer</div><div class="js">Evidence quality</div></div>
+        <div class="jn" id="n-reversibility" onclick="s('reversibility')"><div class="jt">Reversibility check</div><div class="js">Catastrophic risk flag</div></div>
+        <div class="jn" id="n-precedent" onclick="s('precedent')"><div class="jt">Precedent engine</div><div class="js">Repo decision history</div></div>
+      </div>
+    </div>
+
+    <div class="da"></div>
+
+    <div class="vr" id="n-verdict" onclick="s('verdict')">
+      <span class="vtl">Verdict engine →</span>
+      <span class="vb va">APPROVE</span>
+      <span class="vb vd">REJECT</span>
+      <span class="vb vw">REQUEST CHANGES</span>
+      <span class="vtl">+ auditable reasoning trace</span>
+    </div>
+
+    <div class="da"></div>
+
+    <p class="sl">Output layer</p>
+    <div class="tr">
+      <div class="cn" id="n-prcomment" onclick="s('prcomment')"><div class="nt">PR comment</div><div class="ns">Inline review posted</div></div>
+      <div class="cn" id="n-audit" onclick="s('audit')"><div class="nt">Audit trail</div><div class="ns">Full reasoning log</div></div>
+      <div class="cn" id="n-dashboard" onclick="s('dashboard')"><div class="nt">Dev dashboard</div><div class="ns">Trends and metrics</div></div>
+    </div>
+
+    <div class="dp" id="dp">
+      <div class="dpt" id="dp-t">Click any component to explore the architecture</div>
+      <div class="dpb" id="dp-b">CouncilAI deploys specialized IBM watsonx subagents as parallel reviewers (Security, Architecture, Testing, Performance), detects when they conflict, weighs their evidence by relevance and confidence, and produces an auditable APPROVE / REJECT verdict with a full reasoning trace.</div>
+      <div class="dptg" id="dp-tg"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const D = {
+      webhook: { t: 'PR webhook', b: 'Receives PR events from GitHub or GitLab via webhook. Validates the HMAC signature, extracts the diff URL and metadata, and fires the CouncilAI pipeline. Supports re-review triggers via comment commands like /council-review.', tags: ['GitHub Webhooks', 'GitLab Webhooks', 'HMAC validation', 'FastAPI event listener'] },
+      diffparser: { t: 'Diff parser', b: 'Parses the raw git diff to extract changed files, modified line ranges, and surrounding code context windows. Builds a structured diff object passed to all four agents. Handles binary files, renames, and permission changes without crashing.', tags: ['python-unidiff', 'Tree-sitter AST', 'Context window builder', 'Structured diff schema'] },
+      classifier: { t: 'Change classifier', b: 'Classifies the change into semantic categories — auth change, schema migration, performance-critical path, UI-only, config change, etc. — using file paths, changed symbols, and a fast IBM Granite LLM call. The classification directly adjusts which agents carry more weight in the Evidence Judge.', tags: ['IBM Granite LLM', 'Embedding similarity', 'File-path heuristics', 'Change-type taxonomy (12 types)'] },
+      security: { t: 'Security agent', b: 'Analyzes the diff for OWASP Top 10 vulnerabilities, exposed secrets, authentication bypasses, insecure dependencies, and unsafe deserialization. Returns a structured verdict: decision, confidence score (0.0–1.0), CVSS severity rating, and specific diff line citations as evidence.', tags: ['IBM Granite', 'OWASP Top 10', 'Secret scanning regex', 'CVE database lookup', 'CVSS 3.1 scoring'] },
+      architecture: { t: 'Architecture agent', b: 'Evaluates whether the change respects architectural boundaries, avoids circular dependencies, follows established design patterns, and does not introduce hidden coupling or tech debt. Compares against documented ADRs (Architecture Decision Records) if present in the repo.', tags: ['IBM Granite', 'Dependency graph analysis', 'SOLID principles check', 'ADR lookup', 'Design pattern recognition'] },
+      testing: { t: 'Testing agent', b: 'Checks test coverage for all changed code paths, identifies edge cases with no corresponding test, and flags potential regression risks. Detects missing assertions, magic numbers without constants, and flaky test patterns introduced by the change.', tags: ['IBM Granite', 'Coverage API integration', 'Edge case detection', 'Regression risk scoring', 'Flakiness pattern detection'] },
+      performance: { t: 'Performance agent', b: 'Analyzes algorithmic complexity (Big-O), database query patterns (N+1 queries, missing indexes), memory allocations, and potential bottlenecks in the change. Uses static analysis for most signals and IBM Granite for complex algorithmic assessments.', tags: ['IBM Granite', 'Big-O static analysis', 'N+1 query detection', 'Memory allocation patterns', 'DB query plan analysis'] },
+      aggregator: { t: 'Opinion aggregator', b: 'Collects all four agent verdicts into a unified opinion set. Each verdict includes: decision (APPROVE / REJECT / WARN), confidence score (0.0–1.0), reasoning text, and a list of specific diff line citations that constitute the evidence.', tags: ['Structured output schema', 'JSON schema validation', 'Verdict normalization', 'Parallel result collection', 'Schema: decision + confidence + citations'] },
+      detector: { t: 'Conflict detector', b: 'Compares all agent verdicts for conflicts. A conflict is defined as: (1) APPROVE vs REJECT coexistence, (2) severity disagreement exceeding one level, or (3) non-overlapping confidence intervals on the same code region. Uses semantic LLM comparison — not keyword matching — so equivalent concerns stated differently are caught.', tags: ['Divergence scoring algorithm', 'Semantic comparison via LLM', 'Confidence interval math', '5-type conflict taxonomy', 'Same-region detection'] },
+      severity: { t: 'Severity classifier', b: 'Classifies each detected conflict: BLOCKING (cannot merge until resolved), ADVISORY (human should review but can proceed), or MINOR (informational only). The severity level passes into the Evidence Judge to determine how aggressively conflicts override weaker verdicts.', tags: ['Risk matrix (3×3)', 'Severity scoring rubric', 'Escalation rules', 'Human-in-the-loop trigger conditions'] },
+      relevance: { t: 'Relevance weighter', b: 'Weights each agent\'s opinion by its relevance to the specific change type. Security agent gets 3× weight on auth changes; Architecture agent gets 3× weight on structural refactors; Testing agent gets 3× weight on new feature code. Weights are per-repo YAML configurable and learnable from historical human override decisions.', tags: ['Change-type × agent weight matrix', 'Dynamic weight calculation', 'Per-repo YAML config', 'Weight adjustment from human overrides'] },
+      confidence: { t: 'Confidence scorer', b: 'Re-evaluates each agent\'s stated confidence against the quality of its evidence. An agent citing specific line numbers with CVSS scores and CVE IDs scores 0.9+. An agent citing general concern with no line reference scores 0.3. Prevents low-evidence opinions from blocking changes — the key to avoiding false positives at scale.', tags: ['Evidence quality rubric (4 dimensions)', 'Citation depth scoring', 'Confidence re-calibration', 'Evidence specificity metric', 'False-positive suppression'] },
+      reversibility: { t: 'Reversibility check', b: 'Flags changes that are difficult or impossible to reverse: database schema migrations, security architecture redesigns, public API breaks, event schema changes. These trigger automatic human escalation regardless of agent consensus — because no LLM confidence level justifies an irreversible production mistake.', tags: ['Risk taxonomy (7 categories)', 'Rollback feasibility analysis', 'Schema migration detection', 'Public API break detection', 'Hard human escalation trigger'] },
+      precedent: { t: 'Precedent engine', b: 'Looks up past review decisions in the repo\'s decision log using vector similarity search. If a semantically similar diff pattern was previously approved or rejected by a human reviewer, that precedent adjusts current verdict weights. This is what makes CouncilAI progressively smarter — it learns from every human override.', tags: ['pgvector / Chroma similarity search', 'Decision history store', 'Diff embedding index', 'Precedent weight adjustment', 'Continual learning from overrides'] },
+      verdict: { t: 'Verdict engine', b: 'Synthesizes weighted evidence from all agents, conflict resolution results, and precedent into a final APPROVE / REJECT / REQUEST_CHANGES decision. Generates a complete reasoning trace: every weight calculation, conflict step, and agent opinion is logged. This trace is what makes CouncilAI enterprise-ready — a judge can audit every decision.', tags: ['Weighted verdict synthesis', 'Full reasoning trace generation', 'APPROVE / REJECT / REQUEST_CHANGES', 'Audit-ready JSON decision record', 'Enterprise compliance output'] },
+      prcomment: { t: 'PR comment output', b: 'Posts a structured PR review comment with the final verdict, per-agent summaries, key concerns ranked by severity, and reasoning summary. Uses GitHub\'s Review API to post inline line comments at specific diff locations. Links to the full audit trail.', tags: ['GitHub Review API', 'GitLab MR API', 'Inline line-level comments', 'Markdown verdict card', 'Audit trail deep link'] },
+      audit: { t: 'Audit trail', b: 'Stores the complete reasoning trace as a queryable JSON document: all agent verdicts, conflict detection steps, evidence weight calculations, and the final decision with full justification. Zero-truncation policy — every step is logged. Designed for SOC2 compliance and engineering post-mortems.', tags: ['JSON document store', 'PostgreSQL / S3', 'Full-trace logging', 'SOC2 compliance ready', 'Queryable decision history'] },
+      dashboard: { t: 'Dev dashboard', b: 'Real-time dashboard showing review trends: agent agreement rates by team, most common conflict types, verdict distribution over time, and code health metrics by file area. Built on WebSocket for live updates. Gives engineering leaders early signal on systemic quality issues.', tags: ['React + Recharts', 'WebSocket live updates', 'Team-level agreement analytics', 'Code health heatmap', 'Conflict-type distribution chart'] }
+    };
+
+    let cur = null;
+    function s(id) {
+      if (cur) {
+        const p = document.getElementById('n-' + cur);
+        if (p) p.classList.remove('act');
+      }
+      const el = document.getElementById('n-' + id);
+      if (el) el.classList.add('act');
+      cur = id;
+      const d = D[id];
+      document.getElementById('dp-t').textContent = d.t;
+      document.getElementById('dp-b').textContent = d.b;
+      document.getElementById('dp-tg').innerHTML = d.tags.map(t => `<span class="dtg">${t}</span>`).join('');
+      document.getElementById('dp').classList.add('lit');
+    }
+  </script>
+</body>
+</html>
