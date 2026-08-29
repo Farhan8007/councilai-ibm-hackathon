@@ -5,6 +5,7 @@ Import the concrete agents from here:
 
     from agents import SecurityAgent, ArchitectureAgent, TestingAgent, PerformanceAgent
     from agents import aggregate, detect_conflicts
+    from agents import check_evidence
 """
 
 from agents.security import SecurityAgent
@@ -13,6 +14,7 @@ from agents.testing import TestingAgent
 from agents.performance import PerformanceAgent
 from agents.base import BaseAgent
 from agents.aggregator import aggregate, detect_conflicts
+from agents.evidence import check_evidence
 
 __all__ = [
     "BaseAgent",
@@ -22,4 +24,5 @@ __all__ = [
     "PerformanceAgent",
     "aggregate",
     "detect_conflicts",
+    "check_evidence",
 ]
