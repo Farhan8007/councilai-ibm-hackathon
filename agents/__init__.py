@@ -4,6 +4,7 @@ CouncilAI specialist agents package.
 Import the concrete agents from here:
 
     from agents import SecurityAgent, ArchitectureAgent, TestingAgent, PerformanceAgent
+    from agents import aggregate, detect_conflicts
 """
 
 from agents.security import SecurityAgent
@@ -11,6 +12,7 @@ from agents.architecture import ArchitectureAgent
 from agents.testing import TestingAgent
 from agents.performance import PerformanceAgent
 from agents.base import BaseAgent
+from agents.aggregator import aggregate, detect_conflicts
 
 __all__ = [
     "BaseAgent",
@@ -18,4 +20,6 @@ __all__ = [
     "ArchitectureAgent",
     "TestingAgent",
     "PerformanceAgent",
+    "aggregate",
+    "detect_conflicts",
 ]
