@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  db:
+    image: pgvector/pgvector:pg15
+    container_name: councilai_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: councilai
+      POSTGRES_PASSWORD: councilai_password
+      POSTGRES_DB: councilai
+    ports:
+      - "5432:5432"
+    volumes:
+      - councilai_pgdata:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U councilai -d councilai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    container_name: councilai_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://councilai:councilai_password@db:5432/councilai
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+
+volumes:
+  councilai_pgdata:
