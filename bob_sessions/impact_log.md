@@ -3,3 +3,8 @@ Staged 2 subagents with opposing mandates against the SQL injection line in auth
 Both returned REJECT — but Subagent A broke its ship-fast mandate to do it.
 Demonstrates that even conflicting agents converge on critical security findings,
 which is exactly what CouncilAI's Evidence Judge is built to handle.
+Session 4 — orchestrator timeout review
+Bob traced future.result() in the as_completed loop — found it re-raises on
+any agent exception, crashing the whole pipeline and discarding other agents'
+results. Patched with try/except that synthesises a passed=False AgentResult
+so the downstream judge still runs. Would have caused HTTP 500 mid-demo.
