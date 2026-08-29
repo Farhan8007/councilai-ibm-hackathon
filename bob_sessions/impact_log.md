@@ -8,3 +8,7 @@ Bob traced future.result() in the as_completed loop — found it re-raises on
 any agent exception, crashing the whole pipeline and discarding other agents'
 results. Patched with try/except that synthesises a passed=False AgentResult
 so the downstream judge still runs. Would have caused HTTP 500 mid-demo.
+Session 5 — README + AGENTS.md
+README updated: three → four agents, diagram and table corrected.
+AGENTS.md fully regenerated: now reflects real modules, pipeline stages,
+timeout behaviour, and actual ThreadPoolExecutor mechanism.
