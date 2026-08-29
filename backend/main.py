@@ -12,6 +12,7 @@ Environment variables (loaded from ../.env or the shell):
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 import uuid
@@ -28,7 +29,7 @@ _agents_dir = os.path.join(os.path.dirname(__file__), "..", "agents")
 if _agents_dir not in sys.path:
     sys.path.insert(0, os.path.abspath(_agents_dir))
 
-from models import HealthResponse, ReviewRequest, ReviewResponse, Verdict  # noqa: E402
+from models import AgentResult, HealthResponse, ReviewRequest, ReviewResponse, Verdict  # noqa: E402
 
 # Agent pipeline imports (resolved after sys.path setup above).
 from security import SecurityAgent  # noqa: E402
@@ -113,6 +114,7 @@ async def review(request: ReviewRequest) -> ReviewResponse:
     # ------------------------------------------------------------------
     # Step 1 — run specialist agents in parallel
     # ------------------------------------------------------------------
+    _log = logging.getLogger(__name__)
     results = []
     with ThreadPoolExecutor(max_workers=len(_AGENTS)) as pool:
         futures = {
@@ -120,7 +122,19 @@ async def review(request: ReviewRequest) -> ReviewResponse:
             for agent in _AGENTS
         }
         for future in as_completed(futures):
-            results.append(future.result())
+            agent = futures[future]
+            try:
+                results.append(future.result())
+            except Exception as exc:  # noqa: BLE001
+                _log.error("Agent %s timed out or raised: %s", agent.role, exc)
+                results.append(
+                    AgentResult(
+                        role=agent.role,
+                        passed=False,
+                        findings=[f"Agent did not complete: {type(exc).__name__}: {exc}"],
+                        raw_output="",
+                    )
+                )
 
     # Restore a stable order (security, architecture, testing, performance)
     # so that the response is deterministic regardless of thread scheduling.
