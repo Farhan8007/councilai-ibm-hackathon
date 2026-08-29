@@ -1,68 +1,157 @@
-# IBM Hackathon GitHub Project Template
+<div align="center">
 
-This GitHub project template is for IBM Hackathon projects. It includes pre-configured security files to help prevent accidental credential commits and potential account suspension during the hackathon.
+# ⚖️ CouncilAI
 
-## 🚀 Quick Start
+### Multi-Agent Software Engineering Judge
+**IBM TechXchange Pre-conference Dev Day Hackathon 2026**
 
-1. **Use this template to create your project:**
-   - Click "Use this template" button above and select "Create a new repository"
-   - Name your repository
-   - Click "Create repository"
+![CouncilAI](bob_sessions/logo.png)
 
-2. **Clone your new repository:**
-
-   ```bash
-   git clone https://github.com/HACKATHON-ORG/your-repo-name.git
-   cd your-repo-name
-   ```
-
-3. **Set up environment variables:**
-
-   ```bash
-   # Copy the example file
-   cp .env.example .env
-
-   # Edit .env with your actual credentials
-   # Use your preferred editor (nano, vim, code, etc.)
-   nano .env
-   ```
-
-4. **Verify .gitignore is working:**
-
-   ```bash
-   # This should NOT show .env file
-   git status
-
-   # This should confirm .env is ignored
-   git check-ignore -v .env
-   ```
-
-5. **Start developing!**
-
-## 🔒 Security Features
-
-This template includes:
-
-- **`.gitignore`** - Prevents committing credentials and live session files
-- **`.bobignore`** - Prevents AI assistants from logging credentials
-- **`.env.example`** - Template for your environment variables
-
-## 📋 Before Every Commit
-
-Always run this checklist:
-
-- [ ] Reviewed `git diff` for sensitive data
-- [ ] No hardcoded API keys or passwords
-- [ ] `.env` file is NOT in staged changes
-- [ ] No files with "credential" or "secret" in name
-- [ ] Used environment variables for all credentials
-
-## 🆘 Need Help?
-
-- Read [SECURITY.md](SECURITY.MD) for detailed guidelines
-- Contact hackathon support through mentor channel
-- Ask in the hackathon Slack workspace
+</div>
 
 ---
 
-**Remember:** Security is everyone's responsibility. When in doubt, ask for help!
+## 🧠 The Problem
+
+Today's AI coding tools review code from a **single perspective**.
+One agent. One opinion. No conflict resolution. No audit trail.
+
+When AI agents disagree on a code change — **who decides who is right?**
+
+---
+
+## 💡 Our Solution
+
+CouncilAI deploys **three IBM Bob specialist subagents in parallel**, each
+reviewing every code change from their domain of expertise.
+
+            IBM Bob
+               │
+     ┌─────────┼─────────┐
+     ↓         ↓         ↓
+ Security   Architecture  Testing
+   Agent       Agent      Agent
+     │         │          │
+     └─────────┼──────────┘
+               ↓
+        Conflict Detector
+               ↓
+        Evidence Checker
+               ↓
+          Final Judge
+               ↓
+     ┌─────────┴─────────┐
+     ↓                   ↓
+  APPROVE              REJECT
+
+  | Agent | Responsibility |
+|---|---|
+| 🔒 Security Agent | Detects vulnerabilities, injection risks, auth flaws |
+| 🏗️ Architecture Agent | Evaluates design patterns, scalability, coupling |
+| 🧪 Testing Agent | Checks coverage, edge cases, test quality |
+
+A **Conflict Detector** identifies when agents disagree.
+An **Evidence Checker** weighs each agent's reasoning by relevance and confidence.
+A **Final Judge** delivers an auditable `APPROVE` or `REJECT` verdict with full reasoning.
+
+---
+
+## 🏗️ Project Structure
+councilai-ibm-hackathon/
+│
+├── backend/          # FastAPI orchestration server
+├── agents/           # Specialist Bob subagents
+├── frontend/         # React verdict dashboard
+├── tests/            # Test suites
+├── docs/             # Architecture documentation
+├── bob_sessions/     # IBM Bob task session screenshots (mandatory)
+├── .env.example      # Environment variable template
+└── README.md
+
+---
+
+## 👥 Team CouncilAI
+
+| Member | Role |
+|---|---|
+| Farhan | Backend / Agent Orchestration |
+| [Member 2] | Frontend / Testing / Demo |
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| AI Agents | IBM Bob (subagents, parallel execution) |
+| LLM | watsonx.ai / IBM Granite |
+| Backend | Python + FastAPI |
+| Frontend | React |
+| Version Control | GitHub |
+
+---
+
+## 🚀 Setup
+
+```bash
+# Clone the repo
+git clone https://github.com/Farhan8007/councilai-ibm-hackathon.git
+cd councilai-ibm-hackathon
+
+# Set up environment variables
+cp .env.example .env
+# Add your watsonx credentials to .env
+
+# Install backend dependencies
+cd backend
+pip install -r requirements.txt
+
+# Install frontend dependencies
+cd ../frontend
+npm install
+```
+
+```markdown
+---
+
+## 📸 Bob Sessions
+
+All IBM Bob task session screenshots are stored in `/bob_sessions` as required
+by the hackathon submission guidelines.
+
+---
+
+## 🔒 Security
+
+Never commit your `.env` file. It is protected by `.gitignore`.
+See `SECURITY.MD` for full guidelines.
+
+---
+
+<div align="center">
+
+Built with ❤️ using IBM Bob · watsonx.ai · IBM TechXchange Hackathon 2026
+
+</div>
+```
+
+---
+
+Once you've saved it, push it:
+
+```bash
+git add README.md
+git commit -m "Add CouncilAI README"
+git push origin backend/farhan
+```
+
+Then merge to main:
+
+```bash
+git checkout main
+git merge backend/farhan
+git push origin main
+git checkout backend/farhan
+```
+
+Paste your terminal output here when done and we'll move to `.env.example` next!
