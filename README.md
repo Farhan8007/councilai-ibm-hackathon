@@ -22,33 +22,34 @@ When AI agents disagree on a code change — **who decides who is right?**
 
 ## 💡 Our Solution
 
-CouncilAI deploys **three IBM Bob specialist subagents in parallel**, each
+CouncilAI deploys **four IBM Bob specialist subagents in parallel**, each
 reviewing every code change from their domain of expertise.
 
-            IBM Bob
-               │
-     ┌─────────┼─────────┐
-     ↓         ↓         ↓
- Security   Architecture  Testing
-   Agent       Agent      Agent
-     │         │          │
-     └─────────┼──────────┘
-               ↓
-        Conflict Detector
-               ↓
-        Evidence Checker
-               ↓
-          Final Judge
-               ↓
-     ┌─────────┴─────────┐
-     ↓                   ↓
-  APPROVE              REJECT
+               IBM Bob
+                  │
+     ┌────────────┼────────────┐
+     ↓            ↓            ↓            ↓
+ Security   Architecture  Testing    Performance
+   Agent       Agent       Agent       Agent
+     │            │            │            │
+     └────────────┼────────────┴────────────┘
+                  ↓
+           Conflict Detector
+                  ↓
+           Evidence Checker
+                  ↓
+             Final Judge
+                  ↓
+        ┌─────────┴─────────┐
+        ↓                   ↓
+     APPROVE              REJECT
 
-  | Agent | Responsibility |
+| Agent | Responsibility |
 |---|---|
-| 🔒 Security Agent | Detects vulnerabilities, injection risks, auth flaws |
+| 🔒 Security Agent | Detects vulnerabilities, injection risks, hardcoded secrets |
 | 🏗️ Architecture Agent | Evaluates design patterns, scalability, coupling |
 | 🧪 Testing Agent | Checks coverage, edge cases, test quality |
+| ⚡ Performance Agent | Flags O(n²) loops, SELECT *, blocking sleep calls |
 
 A **Conflict Detector** identifies when agents disagree.
 An **Evidence Checker** weighs each agent's reasoning by relevance and confidence.
