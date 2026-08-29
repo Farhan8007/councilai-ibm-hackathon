@@ -6,13 +6,16 @@ Database schema for review pipeline, agent verdicts, citations, conflicts, audit
 from datetime import datetime
 from sqlalchemy import (
     Column, String, Integer, Float, DateTime, Text, JSON,
-    ForeignKey, Enum, Boolean, create_engine
+    ForeignKey, Enum, Boolean, create_engine, text
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from pgvector.sqlalchemy import Vector
+from dotenv import load_dotenv
 import enum
 import os
+
+load_dotenv()
 
 Base = declarative_base()
 
@@ -316,7 +319,7 @@ def init_db():
     already exist (see docker/init.sql / CREATE EXTENSION vector)."""
     engine = get_db_engine()
     with engine.connect() as conn:
-        conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         conn.commit()
     Base.metadata.create_all(bind=engine)
     print("✓ Database tables initialized (pgvector extension enabled)")

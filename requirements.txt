@@ -12,7 +12,7 @@ pgvector==0.2.4
 alembic==1.13.1
 jsonschema==4.20.0
 python-multipart==0.0.6
-PyJWT==2.8.1
+PyJWT==2.13.0
 cryptography==41.0.7
 requests==2.31.0
 tenacity==8.2.3

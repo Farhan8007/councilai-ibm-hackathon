@@ -15,6 +15,7 @@ from unidiff import PatchSet
 import hashlib
 import logging
 import os
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -109,10 +110,10 @@ class DiffParser:
     def _parse(self):
         """Parse the diff using unidiff."""
         try:
-            self.patch_set = PatchSet(self.diff_text)
-        except Exception as e:
-            logger.error(f"Failed to parse diff: {e}")
-            self.patch_set = PatchSet()
+            self.patch_set = PatchSet.from_string(self.diff_text)
+        except Exception:
+            logger.exception("Failed to parse diff with unidiff")
+            raise
 
     def get_changed_files(self) -> List[ChangedFileInfo]:
         """
