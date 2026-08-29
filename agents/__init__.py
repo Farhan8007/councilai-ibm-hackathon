@@ -15,7 +15,7 @@ from agents.performance import PerformanceAgent
 from agents.base import BaseAgent
 from agents.aggregator import aggregate, detect_conflicts
 from agents.evidence import check_evidence
-
+from agents.judge import judge
 __all__ = [
     "BaseAgent",
     "SecurityAgent",
@@ -25,4 +25,5 @@ __all__ = [
     "aggregate",
     "detect_conflicts",
     "check_evidence",
+    "judge",
 ]
