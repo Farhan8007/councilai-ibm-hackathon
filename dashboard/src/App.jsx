@@ -46,7 +46,11 @@ export default function App() {
 
           {/* Left column: pipeline + controls */}
           <aside className={styles.sidebar}>
-            <DemoButtons triggering={triggering} onTrigger={trigger} />
+            <DemoButtons
+              triggering={triggering}
+              onTrigger={trigger}
+              selectedPr={selectedPr}
+            />
             <PipelineDiagram
               reviewData={current?.data ?? null}
               loading={isLoading}
@@ -60,6 +64,7 @@ export default function App() {
               error={current?.error ?? null}
               loading={isLoading}
               prLabel={selectedPr != null ? DEMO_DIFFS[selectedPr]?.label : null}
+              prEscalate={selectedPr != null ? DEMO_DIFFS[selectedPr]?.escalate : false}
             />
           </section>
 

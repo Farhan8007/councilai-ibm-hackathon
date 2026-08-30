@@ -364,3 +364,106 @@ class TestEdgeCases:
         diff = "\n".join(f"+    x_{i} = {i}" for i in range(200))
         resp = client.post("/review", json={"diff": diff})
         assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# All 7 Demo Scenarios Verification
+# ---------------------------------------------------------------------------
+
+class TestSevenScenarios:
+    def test_scenario_1_safe_code_change(self):
+        diff = """diff --git a/utils/formatting.py b/utils/formatting.py
+--- a/utils/formatting.py
++++ b/utils/formatting.py
+@@ -1,3 +1,5 @@
++    if amount is None:
++        return "$0.00"
+diff --git a/tests/test_formatting.py b/tests/test_formatting.py
+--- a/tests/test_formatting.py
++++ b/tests/test_formatting.py
+@@ -1,2 +1,4 @@
++def test_none():
++    pass"""
+        body = _post(diff)
+        assert body["verdict"] == Verdict.APPROVE
+
+    def test_scenario_2_security_risk(self):
+        diff = """diff --git a/auth/login.py b/auth/login.py
+--- a/auth/login.py
++++ b/auth/login.py
+@@ -1,3 +1,5 @@
++    query = "SELECT * FROM users WHERE username = ?"
++    print(f"login attempt: pass={password}")"""
+        body = _post(diff)
+        assert body["verdict"] == Verdict.REJECT
+
+    def test_scenario_3_risky_database_migration(self):
+        diff = """diff --git a/migrations/0007_add_billing_tier.py b/migrations/0007_add_billing_tier.py
+--- /dev/null
++++ b/migrations/0007_add_billing_tier.py
+@@ -0,0 +1,5 @@
++def upgrade(connection):
++    connection.execute("ALTER TABLE accounts ADD COLUMN billing_tier VARCHAR(20)")"""
+        body = _post(diff)
+        assert body["verdict"] == Verdict.REJECT
+
+    def test_scenario_4_missing_test_coverage(self):
+        diff = """diff --git a/backend/payment_service.py b/backend/payment_service.py
+--- a/backend/payment_service.py
++++ b/backend/payment_service.py
+@@ -1,3 +1,5 @@
++def process(amount):
++    return True"""
+        body = _post(diff)
+        assert body["verdict"] == Verdict.REJECT
+        assert body["details"]["agents"]["testing"]["passed"] is False
+
+    def test_scenario_5_performance_bottleneck(self):
+        diff = """diff --git a/services/report_generator.py b/services/report_generator.py
+--- a/services/report_generator.py
++++ b/services/report_generator.py
+@@ -1,5 +1,8 @@
++for user in users:
++    for tx in transactions:
++        pass
+diff --git a/tests/test_report.py b/tests/test_report.py
+--- a/tests/test_report.py
++++ b/tests/test_report.py
+@@ -1,2 +1,3 @@
++def test_report(): pass"""
+        body = _post(diff)
+        assert body["verdict"] == Verdict.REJECT
+        assert body["details"]["agents"]["performance"]["passed"] is False
+
+    def test_scenario_6_agent_disagreement(self):
+        diff = """diff --git a/services/sync_service.py b/services/sync_service.py
+--- a/services/sync_service.py
++++ b/services/sync_service.py
+@@ -1,3 +1,5 @@
++# TODO: fix before release
++endpoint = "http://api.legacy-internal.net/v1/sync"
+diff --git a/tests/test_sync.py b/tests/test_sync.py
+--- a/tests/test_sync.py
++++ b/tests/test_sync.py
+@@ -1,2 +1,3 @@
++@pytest.skip("WIP")
++def test_sync(): pass"""
+        body = _post(diff)
+        assert body["verdict"] == Verdict.REJECT
+        assert body["details"]["conflicts"]["has_conflicts"] is True
+
+    def test_scenario_7_hardcoded_secret(self):
+        diff = """diff --git a/services/auth_service.py b/services/auth_service.py
+--- a/services/auth_service.py
++++ b/services/auth_service.py
+@@ -1,3 +1,5 @@
++self.api_key = "sk_live_998877665544332211"
+diff --git a/tests/test_auth.py b/tests/test_auth.py
+--- a/tests/test_auth.py
++++ b/tests/test_auth.py
+@@ -1,2 +1,3 @@
++def test_auth(): pass"""
+        body = _post(diff)
+        assert body["verdict"] == Verdict.REJECT
+        assert body["details"]["agents"]["security"]["passed"] is False
+

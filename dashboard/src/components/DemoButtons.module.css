@@ -3,6 +3,9 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 18px;
+  /* Contain all children — nothing escapes this panel */
+  min-width: 0;
+  overflow: hidden;
 }
 
 .sectionHeader {
@@ -25,7 +28,7 @@
   color: var(--text-muted);
 }
 
-.row {
+.primaryRow {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -43,6 +46,9 @@
   text-align: left;
   width: 100%;
   font-family: inherit;
+  /* Prevent any child from escaping the card boundary */
+  overflow: hidden;
+  min-width: 0;
 }
 
 .btn:hover:not(:disabled) {
@@ -51,8 +57,9 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.btn:active:not(:disabled) {
-  box-shadow: none;
+.btn.selected {
+  border-color: var(--accent);
+  background: var(--surface-3);
 }
 
 .btn:disabled {
@@ -72,7 +79,9 @@
 .btnInner {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
 }
 
 .prNum {
@@ -82,14 +91,18 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   flex-shrink: 0;
-  min-width: 42px;
+  min-width: 38px;
 }
 
 .prTitle {
   font-size: 12px;
   color: var(--text-dim);
   flex: 1;
+  min-width: 0;
   line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .runText {
@@ -105,6 +118,7 @@
   border-radius: 999px;
   letter-spacing: 0.05em;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .tag.green { background: var(--green-dim); color: var(--green); }
@@ -112,6 +126,141 @@
 .tag.amber { background: var(--amber-dim); color: var(--amber); }
 .tag.neutral { background: var(--accent-dim); color: var(--accent); }
 .tag.escalate { background: var(--amber-dim); color: var(--amber); font-size: 9px; letter-spacing: 0.04em; }
+
+.agentTag {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--surface-3);
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Dropdown styling */
+.dropdownContainer {
+  margin-top: 10px;
+  position: relative;
+  /* min-width: 0 prevents this element from escaping the 320px column */
+  min-width: 0;
+}
+
+.dropdownToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-2);
+  border: 1px dashed var(--border-light);
+  color: var(--text-dim);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  /* Ensure the toggle itself never overflows */
+  overflow: hidden;
+  min-width: 0;
+}
+
+.dropdownToggle:hover {
+  border-style: solid;
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--surface-3);
+}
+
+.dropdownToggleActive {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.dropdownToggleLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Take all available space but never push the chevron off-screen */
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dropdownLabel {
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.activeScenarioBadge {
+  font-size: 11px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* Allow badge to shrink when the label is already there */
+  min-width: 0;
+  flex: 1;
+}
+
+.chevron {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.dropdownMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownItem {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  /* Prevent badge overflow within dropdown items */
+  overflow: hidden;
+  min-width: 0;
+}
+
+.dropdownItem:hover:not(:disabled) {
+  background: var(--surface-3);
+  border-color: var(--accent);
+}
+
+.selectedItem {
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
 
 .spinner {
   width: 16px;

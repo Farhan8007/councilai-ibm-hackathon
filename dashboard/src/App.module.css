@@ -33,6 +33,9 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* Prevent sidebar children from expanding beyond the 320px column */
+  min-width: 0;
+  overflow: hidden;
 }
 
 .results {

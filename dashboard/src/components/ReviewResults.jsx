@@ -109,7 +109,7 @@ function parseConflictPair(conflict) {
   return { passer: m[1].toLowerCase(), failer: m[2].toLowerCase() }
 }
 
-export default function ReviewResults({ data, error, loading, prLabel }) {
+export default function ReviewResults({ data, error, loading, prLabel, prEscalate }) {
   if (loading) return <LoadingState />
   if (error)   return <ErrorState message={error} />
   if (!data)   return <EmptyState />
@@ -127,7 +127,7 @@ export default function ReviewResults({ data, error, loading, prLabel }) {
   return (
     <div className={styles.wrapper}>
       {/* Verdict banner */}
-      <VerdictBanner verdict={data.verdict} summary={data.summary} prLabel={prLabel} requestId={data.request_id} hasConflicts={hasConflicts} />
+      <VerdictBanner verdict={data.verdict} summary={data.summary} prLabel={prLabel} requestId={data.request_id} prEscalate={prEscalate} hasConflicts={hasConflicts} />
 
       {/* Agent results grid */}
       <div className={styles.card}>
@@ -310,10 +310,10 @@ function JudgeRationale({ rationale, agents }) {
 
 
 /* ── Verdict Banner ── */
-function VerdictBanner({ verdict, summary, prLabel, requestId, hasConflicts }) {
+function VerdictBanner({ verdict, summary, prLabel, requestId, prEscalate, hasConflicts }) {
   const isApprove  = verdict === 'APPROVE'
   const isReject   = verdict === 'REJECT'
-  const escalate   = isReject && hasConflicts
+  const escalate   = prEscalate || (isReject && hasConflicts)
   const color      = isApprove ? 'var(--green)' : escalate ? 'var(--amber)' : isReject ? 'var(--red)' : 'var(--amber)'
   const dimColor   = isApprove ? 'var(--green-dim)' : escalate ? 'var(--amber-dim)' : isReject ? 'var(--red-dim)' : 'var(--amber-dim)'
 
