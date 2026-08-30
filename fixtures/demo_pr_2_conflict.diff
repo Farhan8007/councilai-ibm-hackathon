@@ -1,0 +1,43 @@
+diff --git a/auth/login.py b/auth/login.py
+index 3c4d5e6..7f8a9b0 100644
+--- a/auth/login.py	2026-08-29 14:01:26.445042805 +0000
++++ b/auth/login.py	2026-08-29 14:01:26.446164919 +0000
+@@ -1,9 +1,24 @@
+ import sqlite3
++from db.raw_connection import get_raw_connection
+ 
+ def authenticate(username, password):
+-    conn = sqlite3.connect("app.db")
+-    query = "SELECT * FROM users WHERE username = '" + username + "' AND password = '" + password + "'"
++    # Directly reaches into the db module's internal raw connection
++    # helper instead of going through the repository/service layer --
++    # bypasses the existing UserRepository abstraction entirely.
++    conn = get_raw_connection()
++    query = "SELECT * FROM users WHERE username = ? AND password_hash = ?"
+     cursor = conn.cursor()
+-    cursor.execute(query)
++    cursor.execute(query, (username, _hash(password)))
+     user = cursor.fetchone()
++    _log_attempt(username, password)
+     return user is not None
++
++def _hash(password):
++    import hashlib
++    return hashlib.sha256(password.encode()).hexdigest()
++
++def _log_attempt(username, password):
++    # Logs the raw plaintext password on every login attempt -- a real
++    # data-exposure issue Security should flag even though the SQL
++    # injection itself was fixed with parameterized queries.
++    print(f"[auth] login attempt: user={username} pass={password}")
+diff --git a/db/raw_connection.py b/db/raw_connection.py
+index 0000000..1a2b3c4 100644
+--- a/db/raw_connection.py	2026-08-29 14:01:26.446164919 +0000
++++ b/db/raw_connection.py	2026-08-29 14:01:26.447523948 +0000
+@@ -0,0 +1,6 @@
++import sqlite3
++
++def get_raw_connection():
++    # Exposes the raw sqlite3 connection outside the repository layer,
++    # breaking the existing data-access boundary.
++    return sqlite3.connect("app.db")

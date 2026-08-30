@@ -1,0 +1,50 @@
+# CouncilAI relevance weight matrix
+# Person A owns the real values here; these are the plan's defaults so the
+# pipeline is fully wired before the Evidence Judge (Hours 9-14) exists.
+# relevance_weights.py loads this file at runtime — editing it and
+# restarting the API is enough to change verdict behavior, no code change.
+# (a5 "spare time" item: this file *is* the /weights endpoint's source.)
+
+weights:
+  auth_change:
+    security: 3.0
+    architecture: 1.5
+    testing: 1.0
+    performance: 0.5
+  schema_migration:
+    security: 1.5
+    architecture: 2.0
+    testing: 2.5
+    performance: 1.0
+  feature_addition:
+    security: 1.5
+    architecture: 1.5
+    testing: 3.0
+    performance: 1.0
+  refactor:
+    security: 1.0
+    architecture: 3.0
+    testing: 1.5
+    performance: 2.0
+  # fallback used for any change_type not listed above
+  default:
+    security: 1.0
+    architecture: 1.0
+    testing: 1.0
+    performance: 1.0
+
+# escalation thresholds
+escalation:
+  reversibility_path_patterns:
+    - "migrations/"
+    - "schema/"
+    - "api/v"
+    - "public/"
+    - "event_schemas/"
+    - ".proto"
+  low_confidence_threshold: 0.5
+
+# precedent engine
+precedent:
+  similarity_boost_threshold: 0.85
+  similarity_boost_multiplier: 1.5

@@ -1,0 +1,37 @@
+﻿diff --git a/auth.py b/auth.py
+index 0000000..1a2b3c4 100644
+--- a/auth.py
++++ b/auth.py
+@@ -0,0 +1,15 @@
++import sqlite3
++
++def get_user_by_name(conn, username):
++    # VULNERABLE: string-formatted SQL, classic injection point
++    query = "SELECT * FROM users WHERE username = '" + username + "'"
++    cursor = conn.cursor()
++    cursor.execute(query)
++    return cursor.fetchone()
++
++def is_admin(user_row):
++    # No test coverage anywhere in the diff for this function
++    return user_row is not None and user_row[3] == "admin"
++
++def login(username, password):
++    pass
+diff --git a/reports.py b/reports.py
+index 0000000..a1b2c3d 100644
+--- a/reports.py
++++ b/reports.py
+@@ -0,0 +1,12 @@
++def find_duplicate_orders(orders):
++    # O(n^2): nested loop over the same list, no index/set used
++    duplicates = []
++    for i in range(len(orders)):
++        for j in range(len(orders)):
++            if i != j and orders[i]["id"] == orders[j]["id"]:
++                duplicates.append(orders[i])
++    return duplicates
++
++def summarize(orders):
++    dupes = find_duplicate_orders(orders)
++    return {"total": len(orders), "duplicates": len(dupes)}

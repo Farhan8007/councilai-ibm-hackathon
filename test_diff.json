@@ -1,0 +1,111 @@
+{
+  "pr_id": 1,
+  "repo": "demo/councilai-demo",
+  "files": [
+    {
+      "path": "auth.py",
+      "language": "python",
+      "change_type": "modified",
+      "hunks": [
+        {
+          "source_start": 0,
+          "source_length": 0,
+          "target_start": 1,
+          "target_length": 10,
+          "lines": [
+            {
+              "type": "add",
+              "content": "def check_password(password):"
+            },
+            {
+              "type": "add",
+              "content": "    # VULNERABLE: Direct comparison without hashing"
+            },
+            {
+              "type": "add",
+              "content": "    if password == \"hardcoded_secret\":"
+            },
+            {
+              "type": "add",
+              "content": "        return True"
+            },
+            {
+              "type": "add",
+              "content": "    return False"
+            },
+            {
+              "type": "add",
+              "content": ""
+            },
+            {
+              "type": "add",
+              "content": "def login(username, password):"
+            },
+            {
+              "type": "add",
+              "content": "    if check_password(password):"
+            },
+            {
+              "type": "add",
+              "content": "        return {\"user\": username, \"token\": \"abc123\"}"
+            },
+            {
+              "type": "add",
+              "content": "    return {\"error\": \"Invalid credentials\"}"
+            }
+          ]
+        }
+      ],
+      "context_before": "",
+      "context_after": ""
+    },
+    {
+      "path": "config.yaml",
+      "language": "yaml",
+      "change_type": "modified",
+      "hunks": [
+        {
+          "source_start": 1,
+          "source_length": 5,
+          "target_start": 1,
+          "target_length": 7,
+          "lines": [
+            {
+              "type": "ctx",
+              "content": "database:"
+            },
+            {
+              "type": "ctx",
+              "content": "  host: localhost"
+            },
+            {
+              "type": "ctx",
+              "content": "  port: 5432"
+            },
+            {
+              "type": "add",
+              "content": "  password: secret123"
+            },
+            {
+              "type": "add",
+              "content": "  api_key: sk-1234567890"
+            },
+            {
+              "type": "ctx",
+              "content": "cache:"
+            },
+            {
+              "type": "ctx",
+              "content": "  ttl: 3600"
+            }
+          ]
+        }
+      ],
+      "context_before": "database:\n  host: localhost\n  port: 5432\ncache:\n  ttl: 3600",
+      "context_after": "database:\n  host: localhost\n  port: 5432\ncache:\n  ttl: 3600"
+    }
+  ],
+  "change_type": "auth_change",
+  "change_confidence": 0.92,
+  "diff_text_hash": "e85c98eb28ee643d737588d6d77a0db4f1591841d19479c8934a70e43f0402da"
+}
