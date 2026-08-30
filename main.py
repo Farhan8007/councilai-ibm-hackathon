@@ -12,6 +12,8 @@ import os
 from datetime import datetime
 from typing import Any, Dict
 
+from contextlib import asynccontextmanager
+
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, RedirectResponse
@@ -39,10 +41,23 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    """Application lifespan: initialise DB on startup."""
+    try:
+        init_db()
+        logger.info("Database initialized")
+    except Exception as e:
+        logger.error("Database initialization failed: %s", e)
+        raise
+    yield
+
+
 app = FastAPI(
     title="CouncilAI",
     description="Multi-agent code review system with IBM watsonx",
-    version="0.2.0"
+    version="0.2.0",
+    lifespan=lifespan,
 )
 
 DASHBOARD_DIR = os.path.join(os.path.dirname(__file__), "dashboard")
@@ -62,16 +77,6 @@ async def dashboard():
     if not os.path.exists(index_path):
         raise HTTPException(status_code=404, detail="Dashboard not built yet")
     return FileResponse(index_path)
-
-
-@app.on_event("startup")
-async def startup():
-    try:
-        init_db()
-        logger.info("✓ Database initialized")
-    except Exception as e:
-        logger.error(f"✗ Database initialization failed: {e}")
-        raise
 
 
 # ===== DEPENDENCY INJECTION =====

@@ -287,7 +287,12 @@ class DiffParser:
 def parse_diff(diff_text: str) -> Tuple[List[ChangedFileInfo], Dict]:
     """
     Convenience function to parse a diff and return structured data.
+
+    Raises:
+        ValueError: if diff_text is None
     """
+    if diff_text is None:
+        raise ValueError("diff_text must not be None")
     parser = DiffParser(diff_text)
     changed_files = parser.get_changed_files()
     stats = parser.get_stats()

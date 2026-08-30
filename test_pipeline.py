@@ -31,7 +31,7 @@ FIXTURE_PATH = Path(__file__).parent / "fixtures" / "demo_pr_hour9_sync.diff"
 
 
 async def single_run(pr_number: int) -> dict:
-    diff_text = FIXTURE_PATH.read_text()
+    diff_text = FIXTURE_PATH.read_text(encoding="utf-8-sig")
     db = get_db_session()
     start = time.monotonic()
     try:

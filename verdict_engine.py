@@ -146,14 +146,16 @@ def synthesize_verdict(
 
     final_confidence = round(min(1.0, abs(weighted_score) / max(1.0, sum(weights.values()))), 4)
 
-    escalate = _is_reversibility_risk(changed_file_paths) or final_confidence < get_low_confidence_threshold()
+    reversibility_risk = _is_reversibility_risk(changed_file_paths)
+    low_confidence = final_confidence < get_low_confidence_threshold()
+    escalate = reversibility_risk or low_confidence
     escalation_reason = None
     if escalate:
-        if _is_reversibility_risk(changed_file_paths):
+        if reversibility_risk:
             escalation_reason = "Reversibility risk: change touches a schema/migration/public-API path."
-            final_decision = DecisionEnum.ESCALATE_TO_HUMAN
         else:
             escalation_reason = f"Low confidence ({final_confidence}) below threshold."
+        final_decision = DecisionEnum.ESCALATE_TO_HUMAN
 
     reasoning = _build_reasoning_trace(opinions, weights, weighted_score, conflict_dicts, final_decision)
 

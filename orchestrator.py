@@ -53,8 +53,6 @@ async def run_pipeline(
 
     Returns: {review_id, verdicts: [...], conflict_count, status}
     """
-    owner = repo.split("/")[0] if "/" in repo else repo
-
     review = Review(
         repo=repo,
         pr_number=pr_number,

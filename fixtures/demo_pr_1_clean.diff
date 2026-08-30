@@ -2,22 +2,20 @@ diff --git a/utils/formatting.py b/utils/formatting.py
 index 1a2b3c4..5d6e7f8 100644
 --- a/utils/formatting.py
 +++ b/utils/formatting.py
-@@ -10,7 +10,10 @@ def format_currency(amount, currency="USD"):
-     Format a numeric amount as a currency string.
-     """
+@@ -1,3 +1,5 @@
+ def format_currency(amount, currency="USD"):
      symbol = CURRENCY_SYMBOLS.get(currency, "$")
--    return f"{symbol}{amount:.2f}"
 +    if amount is None:
 +        return f"{symbol}0.00"
-+    return f"{symbol}{amount:.2f}"
+     return f"{symbol}{amount:.2f}"
 diff --git a/tests/test_formatting.py b/tests/test_formatting.py
 index 2b3c4d5..6e7f8a9 100644
 --- a/tests/test_formatting.py
 +++ b/tests/test_formatting.py
-@@ -5,3 +5,7 @@ def test_format_currency_basic():
- 
+@@ -4,2 +4,6 @@
  def test_format_currency_eur():
-     assert format_currency(9.5, "EUR") == "€9.50"
+     assert format_currency(9.5, "EUR") == "EUR9.50"
 +
 +def test_format_currency_none():
 +    assert format_currency(None) == "$0.00"
++    assert format_currency(None, "EUR") == "EUR0.00"

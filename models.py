@@ -301,18 +301,27 @@ class AuditLog(Base):
 
 # ===== DATABASE SETUP =====
 
+_engine = None
+_SessionLocal = None
+
+
 def get_db_engine():
-    """Create SQLAlchemy engine from DATABASE_URL environment variable."""
-    database_url = os.getenv("DATABASE_URL")
-    if not database_url:
-        raise ValueError("DATABASE_URL environment variable not set")
-    return create_engine(database_url, echo=False)
+    """Create (or return cached) SQLAlchemy engine from DATABASE_URL."""
+    global _engine
+    if _engine is None:
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            raise ValueError("DATABASE_URL environment variable not set")
+        _engine = create_engine(database_url, echo=False)
+    return _engine
+
 
 def get_db_session():
-    """Get a new database session."""
-    engine = get_db_engine()
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    return SessionLocal()
+    """Get a new database session from the shared connection pool."""
+    global _SessionLocal
+    if _SessionLocal is None:
+        _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=get_db_engine())
+    return _SessionLocal()
 
 def init_db():
     """Initialize database tables. Requires the pgvector extension to
