@@ -213,7 +213,269 @@
   margin-top: 4px;
 }
 
-/* ── Rationale ── */
+/* ── Judge Rationale (structured) ── */
+.rationaleCard {
+  /* inherits .card */
+}
+
+.rationaleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.rationaleBadge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+
+.rationaleReject {
+  color: var(--red);
+  background: var(--red-dim);
+  border-color: rgba(240, 106, 106, 0.3);
+}
+
+.rationaleApprove {
+  color: var(--green);
+  background: var(--green-dim);
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+/* Decision summary bar */
+.rationaleDecision {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid;
+}
+
+.rationaleDecisionReject {
+  background: var(--red-dim);
+  border-color: rgba(240, 106, 106, 0.2);
+}
+
+.rationaleDecisionApprove {
+  background: var(--green-dim);
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+.rationaleDecisionIcon {
+  font-size: 14px;
+  font-weight: 800;
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+}
+
+.rationaleDecisionText {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+/* Section label */
+.rationaleSection {
+  margin-bottom: 14px;
+}
+
+.rationaleSection:last-child {
+  margin-bottom: 0;
+}
+
+.rationaleSectionLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+/* Reject trigger finding card */
+.rationaleFindingCard {
+  background: var(--surface-2);
+  border: 1px solid rgba(240, 106, 106, 0.22);
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.rationaleFindingCard:last-child {
+  margin-bottom: 0;
+}
+
+.rationaleFindingAgent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.rationaleFindingIcon {
+  font-size: 13px;
+}
+
+.rationaleFindingLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rationaleFindingBadge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(240, 106, 106, 0.18);
+  color: var(--red);
+  border: 1px solid rgba(240, 106, 106, 0.3);
+  margin-left: auto;
+}
+
+.rationaleFindingText {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+
+/* Code badge for highlighted tokens */
+.codeBadge {
+  display: inline-block;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--surface-3);
+  color: var(--accent);
+  border: 1px solid var(--border-light);
+  white-space: nowrap;
+  margin: 0 1px;
+}
+
+/* Unsupported findings */
+.rationaleUnsupported {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border-left: 2px solid var(--border-light);
+  margin-bottom: 5px;
+  flex-wrap: wrap;
+}
+
+.rationaleUnsupported:last-child {
+  margin-bottom: 0;
+}
+
+.rationaleUnsupportedAgent {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rationaleUnsupportedText {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Conflict chip rows */
+.rationaleConflictRows {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.rationaleConflictRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.conflictChipPass {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--green-dim);
+  color: var(--green);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  white-space: nowrap;
+}
+
+.conflictChipFail {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid rgba(240, 106, 106, 0.25);
+  white-space: nowrap;
+}
+
+.conflictChipIcon {
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.conflictVs {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.rationaleConflictRaw {
+  font-size: 12px;
+  color: var(--amber);
+  padding: 5px 0;
+}
+
+/* No-conflicts note */
+.rationaleNoConflict {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.rationaleNoConflictDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* Rationale fallback (keep for safety) */
 .rationale {
   font-size: 13px;
   color: var(--text-dim);
