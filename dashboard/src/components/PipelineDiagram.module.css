@@ -1,0 +1,158 @@
+.wrapper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sectionIcon {
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stageLabel {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Parallel agents grid */
+.agentRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.agentCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: var(--surface-2);
+  transition: border-color 0.2s, background 0.2s;
+  position: relative;
+}
+
+.agentIcon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.agentName {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.01em;
+  font-weight: 500;
+}
+
+/* Agent colour accents when active */
+.agentCard.pass { border-color: var(--green); background: var(--green-dim); }
+.agentCard.fail { border-color: var(--red); background: var(--red-dim); }
+.agentCard.loading { border-color: var(--accent); background: var(--accent-dim); }
+
+/* pip indicator */
+.pip {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+.pipIdle { background: var(--border-light); }
+.pipLoading { background: var(--accent); animation: blink 0.8s infinite; }
+.pipPass { background: var(--green); }
+.pipFail { background: var(--red); }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+/* Single pipeline cards */
+.pipeCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: var(--surface-2);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.judgeCard {
+  padding: 12px 12px;
+}
+
+.pipeIcon { font-size: 14px; }
+
+.pipeName {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+  flex: 1;
+}
+
+.pipeStatus {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.pipeCard.ok { border-color: var(--border); }
+.pipeCard.warn { border-color: var(--amber); background: var(--amber-dim); }
+.pipeCard.loading { border-color: var(--accent); background: var(--accent-dim); }
+.pipeCard.verdictAPPROVE { border-color: var(--green); background: var(--green-dim); }
+.pipeCard.verdictREJECT { border-color: var(--red); background: var(--red-dim); }
+.pipeCard.verdictPENDING { border-color: var(--amber); background: var(--amber-dim); }
+
+.warnText { color: var(--amber); }
+.okText { color: var(--green); }
+
+/* Arrow connector */
+.arrow {
+  display: flex;
+  justify-content: center;
+  padding: 2px 0;
+  color: var(--border);
+  transition: color 0.3s;
+}
+
+.arrowActive { color: var(--accent); }
+
+/* Verdict badge in Judge card */
+.verdictBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid;
+  letter-spacing: 0.06em;
+}

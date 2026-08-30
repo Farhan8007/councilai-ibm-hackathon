@@ -1,0 +1,365 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Verdict Banner ── */
+.verdictBanner {
+  border: 1px solid;
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.verdictTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.verdictBadgeGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.verdictBadge {
+  font-size: 14px;
+  font-weight: 800;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.escalateBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: var(--amber);
+  background: var(--amber-dim);
+  border: 1px solid rgba(220, 160, 60, 0.35);
+}
+
+.verdictSummary {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.verdictMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.reqId {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.cardTitle {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* When cardTitle is used without cardHeader, add bottom margin */
+.card > .cardTitle {
+  margin-bottom: 14px;
+}
+
+.countBadge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+}
+
+.okBadge   { background: var(--green-dim);  color: var(--green); }
+.warnBadge { background: var(--amber-dim);  color: var(--amber); }
+
+/* ── Agents grid ── */
+.agentsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 500px) {
+  .agentsGrid { grid-template-columns: 1fr; }
+}
+
+.agentStat {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.statPass { color: var(--green); font-weight: 600; }
+.statFail { color: var(--red); font-weight: 600; }
+.statSep  { color: var(--border-light); }
+
+.agentCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  background: var(--surface-2);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.agentCard.pass { border-left: 3px solid var(--green); }
+.agentCard.fail { border-left: 3px solid var(--red); }
+
+.agentHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.agentIcon { font-size: 15px; }
+
+.agentLabel {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.agentStatus {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.passText { color: var(--green); background: var(--green-dim); }
+.failText { color: var(--red); background: var(--red-dim); }
+
+.toggleBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--accent);
+  padding: 0;
+  margin-top: 4px;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.toggleBtn:hover { text-decoration: underline; }
+
+.findingsList {
+  list-style: none;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.findingItem {
+  font-size: 12px;
+  color: var(--text-dim);
+  padding: 8px 10px;
+  border-left: 2px solid var(--red);
+  background: var(--red-dim);
+  border-radius: 0 8px 8px 0;
+  line-height: 1.5;
+}
+
+.cleanNote {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── Rationale ── */
+.rationale {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+
+/* ── Conflicts ── */
+.conflictItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--amber);
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.conflictDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.dimNote {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Evidence ── */
+.evidenceSection {
+  margin-bottom: 12px;
+}
+
+.evidenceSection:last-child {
+  margin-bottom: 0;
+}
+
+.evidenceLabel {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  letter-spacing: 0.03em;
+}
+
+.evidenceItem {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.evidenceItem:last-child {
+  margin-bottom: 0;
+}
+
+.supported   { background: var(--green-dim); color: var(--text-dim); border-left: 2px solid var(--green); }
+.unsupported { background: var(--surface-2); color: var(--text-muted); border-left: 2px solid var(--border-light); }
+
+/* ── States ── */
+.stateCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* Loading */
+.loadingRing {
+  width: 48px;
+  height: 48px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 8px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loadingTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.loadingNote {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Error */
+.errorBox {
+  background: var(--red-dim);
+  border: 1px solid rgba(240, 106, 106, 0.2);
+}
+
+.errorIcon {
+  font-size: 28px;
+  color: var(--red);
+  margin-bottom: 4px;
+}
+
+.errorTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--red);
+}
+
+.errorMsg {
+  font-size: 12px;
+  color: var(--text-dim);
+  max-width: 420px;
+}
+
+.errorHint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.errorHint code {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  background: var(--surface);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+/* Empty */
+.emptyIcon { margin-bottom: 8px; opacity: 0.4; }
+
+.emptyTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.emptyNote {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 280px;
+}

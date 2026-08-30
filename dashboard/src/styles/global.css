@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #0a0c10;
+  --surface: #12151a;
+  --surface-2: #181c23;
+  --surface-3: #1e232c;
+  --border: #1f2530;
+  --border-light: #282f3c;
+  --text: #e6eaf2;
+  --text-dim: #8d99ad;
+  --text-muted: #556070;
+  --accent: #6ea8fe;
+  --accent-dim: rgba(110, 168, 254, 0.10);
+  --green: #34d399;
+  --green-dim: rgba(52, 211, 153, 0.10);
+  --red: #f06a6a;
+  --red-dim: rgba(240, 106, 106, 0.10);
+  --amber: #fbbf24;
+  --amber-dim: rgba(251, 191, 36, 0.10);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167, 139, 250, 0.10);
+  --cyan: #22d3ee;
+  --cyan-dim: rgba(34, 211, 238, 0.10);
+  --radius: 12px;
+  --radius-lg: 16px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, 'Segoe UI', system-ui, Roboto, sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(110, 168, 254, 0.25);
+  color: var(--text);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 3px;
+}
