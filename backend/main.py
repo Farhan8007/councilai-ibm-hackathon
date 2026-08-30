@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import sys
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -30,6 +31,35 @@ if _agents_dir not in sys.path:
     sys.path.insert(0, os.path.abspath(_agents_dir))
 
 from models import AgentResult, HealthResponse, ReviewRequest, ReviewResponse, Verdict  # noqa: E402
+
+# Reversibility path patterns (mirrors relevance_weights defaults).
+_REVERSIBILITY_PATTERNS = [
+    "migrations/", "schema/", "api/v", "public/", "event_schemas/", ".proto",
+]
+_REVERSIBILITY_RATIONALE_KEYWORDS = ["migration", "schema"]
+# Confidence threshold below which an APPROVE is escalated.
+_LOW_CONFIDENCE_THRESHOLD = 0.4
+
+
+def _extract_diff_paths(diff: str) -> list[str]:
+    """Return the list of 'b/' file paths added/modified in a unified diff."""
+    return re.findall(r"^\+\+\+ b/(.+)$", diff, re.MULTILINE)
+
+
+def _is_reversibility_risk(paths: list[str], rationale: str) -> bool:
+    """True when any changed path matches a reversibility pattern, OR the judge
+    rationale contains migration/schema keywords (fallback when no paths available)."""
+    if any(pat in path for path in paths for pat in _REVERSIBILITY_PATTERNS):
+        return True
+    lower = rationale.lower()
+    return any(kw in lower for kw in _REVERSIBILITY_RATIONALE_KEYWORDS)
+
+
+def _review_confidence(results: list[AgentResult]) -> float:
+    """Proxy confidence: fraction of agents that passed, used when no DB score exists."""
+    if not results:
+        return 0.0
+    return sum(1 for r in results if r.passed) / len(results)
 
 # Agent pipeline imports (resolved after sys.path setup above).
 from security import SecurityAgent  # noqa: E402
@@ -161,12 +191,28 @@ async def review(request: ReviewRequest) -> ReviewResponse:
     decision = judge(results, conflict_report, evidence_report)
 
     # ------------------------------------------------------------------
-    # Step 5 — Build response
+    # Step 5 — Escalation rules
+    # ------------------------------------------------------------------
+    final_verdict = decision.verdict
+    diff_paths = _extract_diff_paths(request.diff)
+    reversibility_risk = _is_reversibility_risk(diff_paths, decision.rationale)
+    confidence = _review_confidence(results)
+    low_confidence_approve = (
+        final_verdict == Verdict.APPROVE and confidence < _LOW_CONFIDENCE_THRESHOLD
+    )
+
+    if reversibility_risk and final_verdict == Verdict.REJECT:
+        final_verdict = Verdict.ESCALATE_TO_HUMAN
+    elif low_confidence_approve:
+        final_verdict = Verdict.ESCALATE_TO_HUMAN
+
+    # ------------------------------------------------------------------
+    # Step 6 — Build response
     # ------------------------------------------------------------------
     failed_roles = [r.role.value for r in results if not r.passed]
     passed_roles = [r.role.value for r in results if r.passed]
     summary = (
-        f"{decision.verdict.value}: "
+        f"{final_verdict.value}: "
         + (
             f"{len(failed_roles)} agent(s) failed ({', '.join(failed_roles)})."
             if failed_roles
@@ -195,7 +241,7 @@ async def review(request: ReviewRequest) -> ReviewResponse:
 
     return ReviewResponse(
         request_id=request_id,
-        verdict=decision.verdict,
+        verdict=final_verdict,
         summary=summary,
         details=details,
     )

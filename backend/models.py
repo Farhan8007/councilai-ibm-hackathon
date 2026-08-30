@@ -29,6 +29,7 @@ class Verdict(str, Enum):
     APPROVE = "APPROVE"
     REJECT = "REJECT"
     PENDING = "PENDING"
+    ESCALATE_TO_HUMAN = "ESCALATE_TO_HUMAN"
 
 
 class AgentRole(str, Enum):

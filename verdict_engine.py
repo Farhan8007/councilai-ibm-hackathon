@@ -186,9 +186,17 @@ def _detect_db_conflicts(opinions: List[Opinion]) -> List[Dict[str, Any]]:
     return conflicts
 
 
-def _is_reversibility_risk(changed_file_paths: List[str]) -> bool:
+_REVERSIBILITY_RATIONALE_KEYWORDS = ["migration", "schema"]
+
+
+def _is_reversibility_risk(changed_file_paths: List[str], rationale: str = "") -> bool:
+    """True when any changed path matches a reversibility pattern, OR (fallback)
+    when the judge rationale mentions migration/schema keywords."""
     patterns = get_reversibility_patterns()
-    return any(pattern in path for path in changed_file_paths for pattern in patterns)
+    if any(pattern in path for path in changed_file_paths for pattern in patterns):
+        return True
+    lower = rationale.lower()
+    return any(kw in lower for kw in _REVERSIBILITY_RATIONALE_KEYWORDS)
 
 
 def _build_reasoning_trace(
@@ -281,9 +289,14 @@ def synthesize_verdict(
     # ------------------------------------------------------------------
     final_confidence = round(min(1.0, abs(weighted_score) / max(1.0, sum(weights.values()))), 4)
 
-    reversibility_risk = _is_reversibility_risk(changed_file_paths)
-    low_confidence = final_confidence < get_low_confidence_threshold()
-    escalate = reversibility_risk or low_confidence
+    reversibility_risk = _is_reversibility_risk(changed_file_paths, judge_decision.rationale)
+    low_confidence_approve = (
+        final_confidence < get_low_confidence_threshold()
+        and final_decision == DecisionEnum.APPROVE
+    )
+    # REJECT + reversibility risk → escalate; APPROVE + low confidence → escalate
+    # REJECT + low confidence alone → stays REJECT (per spec)
+    escalate = (reversibility_risk and final_decision == DecisionEnum.REJECT) or low_confidence_approve
     escalation_reason = None
     if escalate:
         if reversibility_risk:

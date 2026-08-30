@@ -127,7 +127,7 @@ export default function ReviewResults({ data, error, loading, prLabel, prEscalat
   return (
     <div className={styles.wrapper}>
       {/* Verdict banner */}
-      <VerdictBanner verdict={data.verdict} summary={data.summary} prLabel={prLabel} requestId={data.request_id} prEscalate={prEscalate} hasConflicts={hasConflicts} />
+      <VerdictBanner verdict={data.verdict} summary={data.summary} prLabel={prLabel} requestId={data.request_id} />
 
       {/* Agent results grid */}
       <div className={styles.card}>
@@ -310,23 +310,32 @@ function JudgeRationale({ rationale, agents }) {
 
 
 /* ── Verdict Banner ── */
-function VerdictBanner({ verdict, summary, prLabel, requestId, prEscalate, hasConflicts }) {
+function VerdictBanner({ verdict, summary, prLabel, requestId }) {
   const isApprove  = verdict === 'APPROVE'
   const isReject   = verdict === 'REJECT'
-  const escalate   = prEscalate || (isReject && hasConflicts)
-  const color      = isApprove ? 'var(--green)' : escalate ? 'var(--amber)' : isReject ? 'var(--red)' : 'var(--amber)'
-  const dimColor   = isApprove ? 'var(--green-dim)' : escalate ? 'var(--amber-dim)' : isReject ? 'var(--red-dim)' : 'var(--amber-dim)'
+  const isEscalate = verdict === 'ESCALATE_TO_HUMAN'
+
+  const color    = isApprove ? 'var(--green)' : isReject ? 'var(--red)' : 'var(--amber)'
+  const dimColor = isApprove ? 'var(--green-dim)' : isReject ? 'var(--red-dim)' : 'var(--amber-dim)'
+
+  let badgeLabel
+  if (isApprove)  badgeLabel = '✓ APPROVE'
+  else if (isReject)   badgeLabel = '✗ REJECT'
+  else if (isEscalate) badgeLabel = '⚠ HUMAN REVIEW REQUIRED'
+  else badgeLabel = verdict ?? '—'
+
+  const badgeClass = isEscalate ? styles.escalateBadge : styles.verdictBadge
+  const badgeStyle = isEscalate
+    ? {}
+    : { color, borderColor: color + '55', background: color + '20' }
 
   return (
     <div className={styles.verdictBanner} style={{ borderColor: color + '40', background: dimColor }}>
       <div className={styles.verdictTop}>
         <div className={styles.verdictBadgeGroup}>
-          <span className={styles.verdictBadge} style={{ color, borderColor: color + '55', background: color + '20' }}>
-            {verdict === 'APPROVE' ? '✓ APPROVE' : verdict === 'REJECT' ? '✗ REJECT' : verdict}
+          <span className={badgeClass} style={badgeStyle}>
+            {badgeLabel}
           </span>
-          {escalate && (
-            <span className={styles.escalateBadge}>⚠ HUMAN REVIEW REQUIRED</span>
-          )}
         </div>
         <div className={styles.verdictMeta}>
           {prLabel && <span>{prLabel}</span>}
