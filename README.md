@@ -251,3 +251,6 @@ Credentials are never hardcoded. All secrets are loaded from environment variabl
 Built with IBM Bob · watsonx.ai · IBM TechXchange Hackathon 2026
 
 </div>
+
+## Security Note
+Demo fixtures use clearly fake placeholder credentials (e.g. `fake_secret_key_12345`) to trigger the Security Agent detection during demonstrations. No real credentials exist in this repository. Real IBM watsonx credentials are stored locally in `.env` which is gitignored.
