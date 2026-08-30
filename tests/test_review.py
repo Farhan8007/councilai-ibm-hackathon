@@ -60,7 +60,7 @@ CLEAN_DIFF = """\
 """
 
 # Triggers SecurityAgent (hard-coded credential on added line).
-CREDENTIAL_DIFF = '+    api_key = "AKIA1234ABCD5678"\n'
+CREDENTIAL_DIFF = '+    api_key = "fake_secret_key_12345"\n'
 
 # Triggers PerformanceAgent (SELECT *).
 SELECT_STAR_DIFF = '+    cursor.execute("SELECT * FROM users")\n'
@@ -349,7 +349,7 @@ class TestEdgeCases:
 
     def test_removed_lines_only_not_flagged(self):
         # Lines starting with '-' — SecurityAgent ignores them.
-        diff = '-    api_key = "AKIA1234ABCD5678"\n'
+        diff = '-    api_key = "fake_secret_key_12345"\n'
         body = _post(diff)
         assert body["details"]["agents"]["security"]["passed"] is True
 
@@ -457,7 +457,7 @@ diff --git a/tests/test_sync.py b/tests/test_sync.py
 --- a/services/auth_service.py
 +++ b/services/auth_service.py
 @@ -1,3 +1,5 @@
-+self.api_key = "sk_live_998877665544332211"
++self.api_key = "fake_secret_key_12345"
 diff --git a/tests/test_auth.py b/tests/test_auth.py
 --- a/tests/test_auth.py
 +++ b/tests/test_auth.py

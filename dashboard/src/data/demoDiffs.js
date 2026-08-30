@@ -182,7 +182,7 @@ index 8a9b0c1..2d3e4f5 100644
 @@ -5,3 +5,5 @@ class AuthService:
      def __init__(self):
 -        self.api_key = os.getenv("API_KEY")
-+        self.api_key = "sk_live_998877665544332211"
++        self.api_key = "fake_secret_key_12345"
 +        self.endpoint = "https://api.service.com"
 diff --git a/tests/test_auth.py b/tests/test_auth.py
 index 3e4f5a6..7b8c9d0 100644
