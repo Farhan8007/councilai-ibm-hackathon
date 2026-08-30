@@ -2,6 +2,8 @@
 
 # ⚖️ CouncilAI
 
+![CouncilAI Logo](bob_sessions/logo.png)
+
 ### Multi-Agent Code Review System
 
 **IBM TechXchange Pre-conference Dev Day Hackathon 2026**

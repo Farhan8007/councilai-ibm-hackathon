@@ -5,8 +5,8 @@
 
 export const DEMO_DIFFS = {
   1: {
-    label: 'PR #1 Safe Change — Null Guard & Tests',
-    description: 'Null guard for format_currency + matching test',
+    label: 'PR #1 — Safe Code Change',
+    description: 'Safe Code Change',
     context: 'Null-guard for format_currency + matching test',
     expectedVerdict: 'APPROVE',
     diff: `diff --git a/utils/formatting.py b/utils/formatting.py
@@ -32,8 +32,8 @@ index 2b3c4d5..6e7f8a9 100644
 +    assert format_currency(None, "EUR") == "EUR0.00"`,
   },
   2: {
-    label: 'PR #2 Security Risk — Authentication Query',
-    description: 'Parameterised query but logs plaintext password',
+    label: 'PR #2 — Security Risk',
+    description: 'Security Risk',
     context: 'auth/login.py refactor — parameterised queries but logs plaintext password',
     expectedVerdict: 'REJECT',
     diff: `diff --git a/auth/login.py b/auth/login.py
@@ -64,8 +64,8 @@ index 3c4d5e6..7f8a9b0 100644
 +    print(f"[auth] login attempt: user={username} pass={password}")`,
   },
   3: {
-    label: 'PR #3 Risky Database Migration',
-    description: 'Irreversible schema change — drops plan_id, no rollback',
+    label: 'PR #3 — Risky Database Migration',
+    description: 'Risky Database Migration',
     context: 'Irreversible billing_tier migration that drops plan_id column',
     expectedVerdict: 'REJECT',
     escalate: true,
