@@ -43,13 +43,16 @@ db.execute(text("SELECT 1"))
 `PatchedFile` subclasses `list` directly — there is **no `.hunks` attribute**. Iterate `patched_file` directly. `f.added` and `f.removed` are `int` counts, not lists.
 
 ### IBM watsonx — always optional
-Every watsonx call (classifier, embedder) must degrade gracefully when `IBM_WATSONX_API_KEY` is unset. The pattern: heuristic/pseudo result first, attempt real call only if key is set, `except Exception → log warning + return heuristic result`. Never raise or block the pipeline.
+Every watsonx call (classifier, embedder) must degrade gracefully when `WATSONX_API_KEY` is unset. The pattern: heuristic/pseudo result first, attempt real call only if key is set, `except Exception → log warning + return heuristic result`. Never raise or block the pipeline.
 
 ### Agent client fallback
-`agent_client.run_council()` never raises. On timeout or schema failure it returns `{decision: "WARN", confidence: 0.2, is_timeout: true}`. The pipeline must handle WARN verdicts as normal, not as errors.
+`agent_client.run_council()` never raises. On timeout or service error it returns `{decision: "WARN", confidence: 0.2, is_timeout: true}` for all agents. The pipeline must handle WARN verdicts as normal, not as errors.
+
+### Agent service endpoint
+`run_council()` calls **`POST /review`** (not `/agents/{name}`). The endpoint is on Farhan's service and runs all 4 agents internally. Request body: `{"diff": "<json string>", "context": ""}`. Response: `{"verdict": "APPROVE"|"REJECT", "details": {"agents": {"security": {"passed": bool, "findings": [...], "raw_output": "..."}, ...}}}`.
 
 ### pgvector embedding dimension
-Embeddings are **384-dim** (IBM `slate-125m-english-rtrvr`). The `Vector(384)` column type in `models.py` must stay in sync. Adjust the constant `EMBEDDING_DIM` in `embedding.py` if the model changes.
+Embeddings are **384-dim** (IBM `slate-125m-english-rtrvr-v2`). The `Vector(384)` column type in `models.py` must stay in sync. Adjust the constant `EMBEDDING_DIM` in `embedding.py` if the model changes.
 
 ### diff_text_override (fixture path)
 `orchestrator.run_pipeline()` accepts `diff_text_override` to skip the GitHub fetch. Use this for all local/test runs — see `test_pipeline.py` and the `/review/test` endpoint.
@@ -58,7 +61,7 @@ Embeddings are **384-dim** (IBM `slate-125m-english-rtrvr`). The `Vector(384)` c
 
 Two JSON schemas under `schema/` define the inter-team contract (committed at Hour 1 sync and must not be changed without agreement):
 - `schema/diff_schema.json` — what `diff_parser.build_diff_schema()` produces; agents consume this.
-- `schema/verdict_schema.json` — what each agent's `/agents/{name}` endpoint must return; validated by `agent_client._validate_verdict()`.
+- `schema/verdict_schema.json` — internal verdict shape used by `agent_client._validate_verdict()` and the orchestrator; not the wire format of `/review`.
 
 Verdict decisions are one of: `APPROVE | REJECT | WARN`. The extended `DecisionEnum` (`REQUEST_CHANGES`, `ESCALATE_TO_HUMAN`) exists in the DB but agents only return the three-value set above.
 
@@ -70,9 +73,9 @@ Verdict decisions are one of: `APPROVE | REJECT | WARN`. The extended `DecisionE
 
 All config via `.env` (see `.env.example`). Key ones:
 - `DATABASE_URL` — required; no default.
-- `AGENT_SERVICE_URL` — defaults to `http://localhost:8100`.
+- `AGENT_SERVICE_URL` — defaults to `http://localhost:8000`.
 - `AGENT_TIMEOUT_SECONDS` — defaults to `30`.
-- `IBM_WATSONX_API_KEY` / `IBM_WATSONX_PROJECT_ID` / `IBM_WATSONX_URL` — all optional; pipeline runs without them.
+- `WATSONX_API_KEY` / `WATSONX_PROJECT_ID` / `WATSONX_URL` — all optional; pipeline runs without them.
 - `GITHUB_WEBHOOK_SECRET` — if unset, webhook accepts all requests (dev mode, logs a warning).
 
 ## Code Style

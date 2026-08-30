@@ -21,7 +21,11 @@ from classifier import classify_change
 from diff_parser import build_diff_schema, parse_diff
 from embedding import embed_diff
 from github_client import fetch_pr_diff
-from models import AuditLog, ChangedFile, ChangeTypeEnum, Review
+from models import AuditLog, ChangedFile, ChangeTypeEnum, Conflict, Review
+from precedent_engine import apply_precedent_boost
+from pr_commenter import post_verdict_to_github
+from relevance_weights import get_weights
+from verdict_engine import synthesize_verdict
 
 logger = logging.getLogger(__name__)
 
@@ -152,10 +156,56 @@ async def run_pipeline(
         aggregated = store_opinions(db, review_id, verdicts)
         _log_step(db, review_id, "opinions_stored", {"count": len(aggregated["verdicts"])})
 
-        review.status = "awaiting_verdict"  # conflict detection + verdict synthesis is Person A's next stage
+        # ---- 6. Precedent lookup + weight boost ----
+        base_weights = get_weights(classification["type"])
+        precedent_result = apply_precedent_boost(db, review.diff_embedding, base_weights)
+        _log_step(db, review_id, "precedent_checked", {
+            "precedents_found": len(precedent_result["precedents"]),
+            "boosted": precedent_result["boosted"],
+        })
+
+        # ---- 7. Verdict synthesis (provisional — see verdict_engine.py docstring) ----
+        changed_file_paths = [cf.path for cf in changed_files]
+        verdict = synthesize_verdict(
+            db=db, review_id=review_id, change_type=classification["type"],
+            weights=precedent_result["weights"], changed_file_paths=changed_file_paths,
+        )
+        _log_step(db, review_id, "verdict_synthesized", {
+            "decision": verdict.final_decision.value,
+            "confidence": verdict.final_confidence,
+            "escalate": verdict.escalate_to_human,
+        })
+
+        review.status = "verdict_complete"
+        db.commit()
+
+        # ---- 8. Post to GitHub (skipped for fixture/test runs with no commit_sha) ----
+        github_result = {"posted": False, "response": None}
+        if review.commit_sha and diff_text_override is None:
+            try:
+                valid_line_ranges = _build_valid_line_ranges(changed_files)
+                github_result = await post_verdict_to_github(
+                    db=db, review=review, verdict=verdict,
+                    valid_line_ranges=valid_line_ranges,
+                    precedents=precedent_result["precedents"],
+                )
+                _log_step(db, review_id, "github_comment_posted", {"posted": github_result["posted"]})
+            except Exception as e:
+                logger.error(f"GitHub comment post failed for review {review_id}: {e}", exc_info=True)
+                _log_step(db, review_id, "github_comment_failed", {"error": str(e)})
+
+        review.status = "complete"
         db.commit()
 
         aggregated["change_type"] = classification["type"]
+        aggregated["conflict_count"] = db.query(Conflict).filter(Conflict.review_id == review_id).count()
+        aggregated["verdict"] = {
+            "decision": verdict.final_decision.value,
+            "confidence": verdict.final_confidence,
+            "escalate_to_human": verdict.escalate_to_human,
+        }
+        aggregated["github_comment_posted"] = github_result["posted"]
+        aggregated["status"] = "complete"
         return aggregated
 
     except Exception as e:
@@ -164,3 +214,19 @@ async def run_pipeline(
         db.commit()
         _log_step(db, review_id, "pipeline_error", {"error": str(e)})
         return {"review_id": review_id, "verdicts": [], "conflict_count": 0, "status": "failed", "error": str(e)}
+
+
+def _build_valid_line_ranges(changed_files) -> Dict[str, set]:
+    """file_path -> set of new-file line numbers that are add/context lines
+    in a changed hunk, i.e. valid targets for a GitHub inline comment."""
+    ranges: Dict[str, set] = {}
+    for f in changed_files:
+        lines = set()
+        for hunk in f.structured_hunks:
+            cursor = hunk.get("target_start", 1)
+            for line in hunk.get("lines", []):
+                if line["type"] in ("add", "ctx"):
+                    lines.add(cursor)
+                    cursor += 1
+        ranges[f.path] = lines
+    return ranges

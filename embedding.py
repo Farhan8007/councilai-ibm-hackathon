@@ -5,8 +5,8 @@ Populates Review.diff_embedding / PrecedentDecision.diff_embedding
 (pgvector columns, dim=384) so the precedent engine (Person B, Hour 9-14)
 has real vectors to search against from hour 6 onward.
 
-Uses IBM watsonx's `slate-125m-english-rtrvr` embedding model (384-dim)
-when IBM_WATSONX_API_KEY is set. Falls back to a deterministic hash-based
+Uses IBM watsonx's `slate-125m-english-rtrvr-v2` embedding model (384-dim)
+when WATSONX_API_KEY is set. Falls back to a deterministic hash-based
 pseudo-embedding otherwise, so the pipeline and pgvector similarity search
 are fully exercisable offline / without IBM credentials — the pseudo
 vectors are stable per diff (same diff text -> same vector) so nearest
@@ -24,13 +24,13 @@ import httpx
 logger = logging.getLogger(__name__)
 
 EMBEDDING_DIM = 384
-_WATSONX_EMBED_MODEL = "ibm/slate-125m-english-rtrvr"
+_WATSONX_EMBED_MODEL = "ibm/slate-125m-english-rtrvr-v2"
 
 
 def _iam_token() -> str:
-    api_key = os.getenv("IBM_WATSONX_API_KEY")
+    api_key = os.getenv("WATSONX_API_KEY")
     if not api_key:
-        raise RuntimeError("IBM_WATSONX_API_KEY not set")
+        raise RuntimeError("WATSONX_API_KEY not set")
     resp = httpx.post(
         "https://iam.cloud.ibm.com/identity/token",
         data={"grant_type": "urn:ibm:params:oauth:grant-type:apikey", "apikey": api_key},
@@ -42,10 +42,10 @@ def _iam_token() -> str:
 
 
 def _granite_embed(text: str) -> List[float]:
-    project_id = os.getenv("IBM_WATSONX_PROJECT_ID")
-    url = os.getenv("IBM_WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
+    project_id = os.getenv("WATSONX_PROJECT_ID")
+    url = os.getenv("WATSONX_URL", "https://us-south.ml.cloud.ibm.com").rstrip("/")
     if not project_id:
-        raise RuntimeError("IBM_WATSONX_PROJECT_ID not set")
+        raise RuntimeError("WATSONX_PROJECT_ID not set")
 
     token = _iam_token()
     # watsonx caps embedding input length; truncate very large diffs rather
@@ -94,7 +94,7 @@ def embed_diff(diff_text: str) -> Optional[List[float]]:
     if not diff_text:
         return None
 
-    if os.getenv("IBM_WATSONX_API_KEY"):
+    if os.getenv("WATSONX_API_KEY"):
         try:
             return _granite_embed(diff_text)
         except Exception as e:

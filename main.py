@@ -14,6 +14,8 @@ from typing import Any, Dict
 
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -24,6 +26,8 @@ from models import (
     Review, Verdict, get_db_session, init_db,
 )
 from orchestrator import run_pipeline
+from precedent_engine import seed_demo_precedents
+from relevance_weights import get_all_weights, reload as reload_weights
 
 # ===== SETUP =====
 
@@ -40,6 +44,24 @@ app = FastAPI(
     description="Multi-agent code review system with IBM watsonx",
     version="0.2.0"
 )
+
+DASHBOARD_DIR = os.path.join(os.path.dirname(__file__), "dashboard")
+if os.path.isdir(DASHBOARD_DIR):
+    app.mount("/dashboard-assets", StaticFiles(directory=DASHBOARD_DIR), name="dashboard-assets")
+
+
+@app.get("/")
+async def root():
+    """Redirect to the live dashboard (no build step — served straight from dashboard/index.html)."""
+    return RedirectResponse(url="/dashboard")
+
+
+@app.get("/dashboard")
+async def dashboard():
+    index_path = os.path.join(DASHBOARD_DIR, "index.html")
+    if not os.path.exists(index_path):
+        raise HTTPException(status_code=404, detail="Dashboard not built yet")
+    return FileResponse(index_path)
 
 
 @app.on_event("startup")
@@ -86,6 +108,13 @@ class TestReviewRequest(BaseModel):
     pr_number: int = 0
     pr_title: str = "Test review (fixture diff)"
     diff_text: str
+
+
+DEMO_FIXTURES = {
+    1: ("fixtures/demo_pr_1_clean.diff", "PR #1 — Clean approve (minor bug fix)"),
+    2: ("fixtures/demo_pr_2_conflict.diff", "PR #2 — Security vs Architecture conflict"),
+    3: ("fixtures/demo_pr_3_schema_migration.diff", "PR #3 — Schema migration (escalate to human)"),
+}
 
 
 # ===== UTILITIES =====
@@ -242,6 +271,59 @@ async def trigger_test_review(body: TestReviewRequest, db: Session = Depends(get
         diff_text_override=body.diff_text,
     )
     return result
+
+
+@app.post("/demo/trigger/{n}")
+async def trigger_demo_pr(n: int, db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """
+    One-click demo trigger for the dashboard's 3 buttons (b5: demo
+    polish). Runs the real pipeline against a canned fixture diff — same
+    code path as a live webhook, just skipping the GitHub fetch step.
+    """
+    if n not in DEMO_FIXTURES:
+        raise HTTPException(status_code=404, detail=f"No demo fixture #{n}. Valid: {list(DEMO_FIXTURES)}")
+
+    fixture_path, title = DEMO_FIXTURES[n]
+    full_path = os.path.join(os.path.dirname(__file__), fixture_path)
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=500, detail=f"Fixture missing on disk: {fixture_path}")
+
+    with open(full_path) as f:
+        diff_text = f.read()
+
+    result = await run_pipeline(
+        db=db, repo="demo/councilai-demo", pr_number=1000 + n,
+        pr_title=title, diff_text_override=diff_text,
+    )
+    return result
+
+
+@app.get("/weights")
+async def get_weights_endpoint() -> Dict[str, Any]:
+    """
+    Returns the current relevance weight matrix as JSON (a5 'spare time'
+    item — shows judges the system is configurable, not hardcoded logic
+    buried in Python). Backed by council.yaml.
+    """
+    return {"weights": get_all_weights()}
+
+
+@app.post("/weights/reload")
+async def reload_weights_endpoint() -> Dict[str, Any]:
+    """Force a re-read of council.yaml without restarting the server."""
+    return {"weights": reload_weights().get("weights")}
+
+
+@app.post("/precedents/seed")
+async def seed_precedents_endpoint(db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """
+    Manually seeds the 5 demo precedent decisions from precedent_engine.py
+    so the precedent engine fires reliably during the live demo (per the
+    plan: vector similarity on a tiny dataset is unreliable, so these are
+    hand-picked to match the 3 demo PRs almost exactly). Idempotent.
+    """
+    count = seed_demo_precedents(db)
+    return {"seeded": count}
 
 
 @app.get("/review/{review_id}")

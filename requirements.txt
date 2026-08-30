@@ -9,6 +9,7 @@ httpx==0.25.1
 aiohttp==3.9.1
 unidiff==0.7.4
 pgvector==0.2.4
+pyyaml==6.0.1
 alembic==1.13.1
 jsonschema==4.20.0
 python-multipart==0.0.6
@@ -16,6 +17,6 @@ PyJWT==2.13.0
 cryptography==41.0.7
 requests==2.31.0
 tenacity==8.2.3
-# IBM watsonx (Person A will add their specific version)
+# IBM watsonx
 ibm-cloud-sdk-core==3.20.0
-ibm-watson-machine-learning==1.0.371
+ibm-watsonx-ai>=1.0.0

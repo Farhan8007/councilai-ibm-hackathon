@@ -6,7 +6,7 @@ used by the Evidence Judge's relevance weight matrix (Person A, Hour 9-14).
 
 Strategy (per architecture.html "classifier" node): file-path heuristics
 first (fast, free, deterministic — also the offline/no-API-key fallback),
-then a single fast IBM Granite call to refine the call when heuristics are
+then a single fast LLM call to refine the call when heuristics are
 ambiguous. Never blocks the pipeline if watsonx is unreachable — heuristic
 result is returned with reasoning noting the fallback.
 """
@@ -15,9 +15,8 @@ import json
 import logging
 import os
 import re
+import warnings
 from typing import Any, Dict, List
-
-import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -77,71 +76,65 @@ def _heuristic_classify(diff_schema: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _get_watsonx_iam_token() -> str:
-    api_key = os.getenv("IBM_WATSONX_API_KEY")
-    if not api_key:
-        raise RuntimeError("IBM_WATSONX_API_KEY not set")
-    resp = httpx.post(
-        "https://iam.cloud.ibm.com/identity/token",
-        data={
-            "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
-            "apikey": api_key,
-        },
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-        timeout=10.0,
-    )
-    resp.raise_for_status()
-    return resp.json()["access_token"]
-
-
 def _granite_refine(diff_schema: Dict[str, Any], prior: Dict[str, Any]) -> Dict[str, Any]:
     """
-    One fast IBM Granite call to confirm/override the heuristic prior.
+    One fast LLM call to confirm/override the heuristic prior.
     Raises on any failure — callers should catch and fall back to the
     heuristic result so the pipeline never blocks on watsonx availability.
     """
-    project_id = os.getenv("IBM_WATSONX_PROJECT_ID")
-    url = os.getenv("IBM_WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
-    if not project_id:
-        raise RuntimeError("IBM_WATSONX_PROJECT_ID not set")
+    from ibm_watsonx_ai import Credentials
+    from ibm_watsonx_ai.foundation_models import ModelInference
 
-    token = _get_watsonx_iam_token()
+    api_key = os.getenv("WATSONX_API_KEY")
+    project_id = os.getenv("WATSONX_PROJECT_ID")
+    url = os.getenv("WATSONX_URL", "https://us-south.ml.cloud.ibm.com").rstrip("/")
+
+    if not api_key:
+        raise RuntimeError("WATSONX_API_KEY not set")
+    if not project_id:
+        raise RuntimeError("WATSONX_PROJECT_ID not set")
+
+    credentials = Credentials(url=url, api_key=api_key)
+    model = ModelInference(
+        model_id="meta-llama/llama-3-3-70b-instruct",
+        credentials=credentials,
+        project_id=project_id,
+    )
 
     file_paths = [f.get("path") for f in diff_schema.get("files", [])][:20]
-    prompt = (
-        "Classify this code diff. Respond ONLY with a single valid JSON object, "
-        "no preamble, no markdown fences, matching exactly this schema: "
-        '{"type": one of ' + json.dumps(CHANGE_TYPES) + ', "confidence": float 0-1, "reasoning": str}.\n\n'
-        f"Changed files: {json.dumps(file_paths)}\n"
-        f"Heuristic prior guess: {prior['type']} (confidence {prior['confidence']})\n"
-        "Confirm or override the prior based on the file paths and change shape."
-    )
+    messages = [
+        {
+            "role": "user",
+            "content": (
+                "Classify this code diff. Respond ONLY with a single valid JSON object, "
+                "no preamble, no markdown fences, matching exactly this schema: "
+                '{"type": one of ' + json.dumps(CHANGE_TYPES) + ', "confidence": float 0-1, "reasoning": str}.\n\n'
+                f"Changed files: {json.dumps(file_paths)}\n"
+                f"Heuristic prior guess: {prior['type']} (confidence {prior['confidence']})\n"
+                "Confirm or override the prior based on the file paths and change shape."
+            ),
+        }
+    ]
 
-    resp = httpx.post(
-        f"{url}/ml/v1/text/generation?version=2023-05-29",
-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-        json={
-            "model_id": "ibm/granite-13b-instruct-v2",
-            "input": prompt,
-            "project_id": project_id,
-            "parameters": {"max_new_tokens": 200, "temperature": 0.0, "decoding_method": "greedy"},
-        },
-        timeout=15.0,
-    )
-    resp.raise_for_status()
-    generated_text = resp.json()["results"][0]["generated_text"].strip()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        response = model.chat(
+            messages=messages,
+            params={"max_tokens": 200, "temperature": 0.0},
+        )
+    generated_text = response["choices"][0]["message"]["content"].strip()
 
     # Be defensive: strip accidental markdown fences before parsing.
     generated_text = re.sub(r"^```(json)?|```$", "", generated_text.strip(), flags=re.MULTILINE).strip()
     parsed = json.loads(generated_text)
 
     if parsed.get("type") not in CHANGE_TYPES:
-        raise ValueError(f"Granite returned invalid type: {parsed.get('type')}")
+        raise ValueError(f"LLM returned invalid type: {parsed.get('type')}")
 
     return {
         "type": parsed["type"],
         "confidence": float(parsed.get("confidence", prior["confidence"])),
-        "reasoning": parsed.get("reasoning", "Granite classification."),
+        "reasoning": parsed.get("reasoning", "LLM classification."),
     }
 
 
@@ -153,8 +146,8 @@ def classify_change(diff_schema: Dict[str, Any]) -> Dict[str, Any]:
     """
     prior = _heuristic_classify(diff_schema)
 
-    if not os.getenv("IBM_WATSONX_API_KEY"):
-        logger.info("IBM_WATSONX_API_KEY not set — using heuristic-only classification")
+    if not os.getenv("WATSONX_API_KEY"):
+        logger.info("WATSONX_API_KEY not set — using heuristic-only classification")
         return prior
 
     try:

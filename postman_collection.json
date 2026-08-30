@@ -1,0 +1,80 @@
+{
+  "info": {
+    "name": "CouncilAI — Demo Fallback",
+    "description": "Code-free backup: trigger each of the 3 demo PRs, then fetch their verdicts. Works with zero frontend if the dashboard breaks mid-demo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000" },
+    { "key": "review_id_1", "value": "" },
+    { "key": "review_id_2", "value": "" },
+    { "key": "review_id_3", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0. Health check",
+      "request": { "method": "GET", "url": "{{base_url}}/health" }
+    },
+    {
+      "name": "1. Trigger PR #1 (clean approve)",
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "const body = pm.response.json();",
+          "pm.collectionVariables.set('review_id_1', body.review_id);"
+        ]}
+      }],
+      "request": { "method": "POST", "url": "{{base_url}}/demo/trigger/1" }
+    },
+    {
+      "name": "1b. Get verdict — PR #1",
+      "request": { "method": "GET", "url": "{{base_url}}/review/{{review_id_1}}" }
+    },
+    {
+      "name": "2. Trigger PR #2 (Security vs Architecture conflict)",
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "const body = pm.response.json();",
+          "pm.collectionVariables.set('review_id_2', body.review_id);"
+        ]}
+      }],
+      "request": { "method": "POST", "url": "{{base_url}}/demo/trigger/2" }
+    },
+    {
+      "name": "2b. Get verdict — PR #2",
+      "request": { "method": "GET", "url": "{{base_url}}/review/{{review_id_2}}" }
+    },
+    {
+      "name": "3. Trigger PR #3 (schema migration -> escalate)",
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "const body = pm.response.json();",
+          "pm.collectionVariables.set('review_id_3', body.review_id);"
+        ]}
+      }],
+      "request": { "method": "POST", "url": "{{base_url}}/demo/trigger/3" }
+    },
+    {
+      "name": "3b. Get verdict — PR #3",
+      "request": { "method": "GET", "url": "{{base_url}}/review/{{review_id_3}}" }
+    },
+    {
+      "name": "List all reviews",
+      "request": { "method": "GET", "url": "{{base_url}}/reviews" }
+    },
+    {
+      "name": "Relevance weight matrix (council.yaml)",
+      "request": { "method": "GET", "url": "{{base_url}}/weights" }
+    },
+    {
+      "name": "Seed demo precedents (run once before demo)",
+      "request": { "method": "POST", "url": "{{base_url}}/precedents/seed" }
+    },
+    {
+      "name": "List precedents",
+      "request": { "method": "GET", "url": "{{base_url}}/precedents" }
+    }
+  ]
+}

@@ -1,11 +1,11 @@
 """
 Agent client for CouncilAI.
 
-Calls Person A's agent service (one HTTP call per agent, run in parallel
-by the orchestrator via asyncio.gather). Validates every response against
-schema/verdict_schema.json — no silent malformed verdicts, per the Hour 1
-sync agreement. Agent timeout is 30s; on timeout or repeated schema
-failure, returns a WARN verdict rather than crashing the pipeline.
+Calls Farhan's agent service via POST /review, which runs all 4 agents
+internally and returns a single consolidated response. The per-agent
+details are mapped back into the {agent_name: verdict_dict} shape the
+orchestrator expects. Agent timeout is 30s; on any failure the affected
+agents degrade to WARN verdicts rather than crashing the pipeline.
 """
 
 import asyncio
@@ -47,60 +47,76 @@ def _validate_verdict(payload: Dict[str, Any]) -> bool:
     return True
 
 
-async def _call_one_agent(agent_name: str, diff_schema: Dict[str, Any], base_url: str) -> Dict[str, Any]:
+def _map_agent_detail(agent_name: str, detail: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Call a single agent endpoint: POST {base_url}/agents/{agent_name}
-    Body: the structured diff (schema/diff_schema.json shape)
-    Retries once on schema validation failure, then falls back to WARN.
+    Map a single entry from /review response's details.agents into the
+    verdict_dict shape the orchestrator expects.
+
+    passed=True  → decision="APPROVE"
+    passed=False → decision="REJECT"
+    confidence defaults to 0.8; raw_output becomes reasoning.
     """
-    url = f"{base_url.rstrip('/')}/agents/{agent_name}"
+    passed = detail.get("passed", False)
+    findings = detail.get("findings", [])
+    raw_output = detail.get("raw_output", "")
 
-    async def _attempt() -> Dict[str, Any]:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(url, json=diff_schema, timeout=AGENT_TIMEOUT_SECONDS)
-            response.raise_for_status()
-            return response.json()
+    # Build a human-readable reasoning string from available fields.
+    reasoning_parts = []
+    if raw_output:
+        reasoning_parts.append(raw_output)
+    if findings:
+        reasoning_parts.append("Findings: " + "; ".join(str(f) for f in findings))
+    reasoning = " | ".join(reasoning_parts) if reasoning_parts else ("Passed." if passed else "Did not pass.")
 
-    for attempt in range(2):
-        try:
-            payload = await asyncio.wait_for(_attempt(), timeout=AGENT_TIMEOUT_SECONDS)
-            if _validate_verdict(payload):
-                payload["agent_name"] = agent_name
-                payload["is_timeout"] = False
-                return payload
-            logger.warning(f"{agent_name} attempt {attempt + 1}: invalid schema, retrying" if attempt == 0 else f"{agent_name}: invalid schema on retry, falling back to WARN")
-        except asyncio.TimeoutError:
-            logger.error(f"{agent_name} agent timed out after {AGENT_TIMEOUT_SECONDS}s")
-            return _timeout_verdict(agent_name)
-        except Exception as e:
-            logger.error(f"{agent_name} agent call failed (attempt {attempt + 1}): {e}")
-            if attempt == 1:
-                return _timeout_verdict(agent_name, reason=f"Agent call failed: {e}")
-
-    return _timeout_verdict(agent_name, reason="Agent returned malformed output twice — schema validation failed")
+    return {
+        "agent_name": agent_name,
+        "decision": "APPROVE" if passed else "REJECT",
+        "confidence": 0.8,
+        "reasoning": reasoning,
+        "citations": [],
+        "is_timeout": False,
+    }
 
 
 async def run_council(diff_schema: Dict[str, Any], base_url: str = None) -> Dict[str, Dict[str, Any]]:
     """
-    Fire all 4 agents in parallel. Never raises — a single agent failure
-    degrades to a WARN verdict for that agent rather than crashing the
-    pipeline (asyncio.gather(..., return_exceptions=True) equivalent).
+    Call POST /review on Farhan's agent service, which runs all 4 agents
+    internally and returns a single consolidated response. Never raises —
+    any failure degrades every agent to a WARN verdict rather than crashing
+    the pipeline.
 
     Returns: {agent_name: verdict_dict}
     """
-    base_url = base_url or os.getenv("AGENT_SERVICE_URL", "http://localhost:8100")
+    base_url = base_url or os.getenv("AGENT_SERVICE_URL", "http://localhost:8000")
+    url = f"{base_url.rstrip('/')}/review"
 
-    results = await asyncio.gather(
-        *[_call_one_agent(name, diff_schema, base_url) for name in AGENT_NAMES],
-        return_exceptions=True,
-    )
+    # Serialize the diff schema to a JSON string as the /review endpoint
+    # expects {"diff": "<json string>", "context": ""}.
+    diff_text = json.dumps(diff_schema)
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await asyncio.wait_for(
+                client.post(url, json={"diff": diff_text, "context": ""}, timeout=AGENT_TIMEOUT_SECONDS),
+                timeout=AGENT_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
+            body = response.json()
+    except asyncio.TimeoutError:
+        logger.error(f"/review timed out after {AGENT_TIMEOUT_SECONDS}s")
+        return {name: _timeout_verdict(name) for name in AGENT_NAMES}
+    except Exception as e:
+        logger.error(f"/review call failed: {e}")
+        return {name: _timeout_verdict(name, reason=f"Agent service call failed: {e}") for name in AGENT_NAMES}
+
+    agents_detail: Dict[str, Any] = body.get("details", {}).get("agents", {})
 
     verdicts: Dict[str, Dict[str, Any]] = {}
-    for name, result in zip(AGENT_NAMES, results):
-        if isinstance(result, Exception):
-            logger.error(f"{name} agent raised unexpectedly: {result}")
-            verdicts[name] = _timeout_verdict(name, reason=f"Unhandled exception: {result}")
+    for name in AGENT_NAMES:
+        if name in agents_detail:
+            verdicts[name] = _map_agent_detail(name, agents_detail[name])
         else:
-            verdicts[name] = result
+            logger.warning(f"/review response missing details for agent '{name}' — using WARN fallback")
+            verdicts[name] = _timeout_verdict(name, reason=f"Agent '{name}' absent from /review response")
 
     return verdicts

@@ -1,0 +1,25 @@
+diff --git a/migrations/0007_add_billing_tier.py b/migrations/0007_add_billing_tier.py
+index 0000000..9a8b7c6 100644
+--- a/migrations/0007_add_billing_tier.py	2026-08-29 14:01:37.495524605 +0000
++++ b/migrations/0007_add_billing_tier.py	2026-08-29 14:01:37.498459129 +0000
+@@ -0,0 +1,20 @@
++"""
++Add billing_tier column to accounts, backfill from legacy plan_id,
++and drop the now-unused plan_id column.
++"""
++
++def upgrade(connection):
++    connection.execute("ALTER TABLE accounts ADD COLUMN billing_tier VARCHAR(20)")
++    connection.execute(
++        "UPDATE accounts SET billing_tier = CASE "
++        "WHEN plan_id = 1 THEN 'free' "
++        "WHEN plan_id = 2 THEN 'pro' "
++        "ELSE 'enterprise' END"
++    )
++    # Irreversible: legacy plan_id is dropped in the same migration.
++    connection.execute("ALTER TABLE accounts DROP COLUMN plan_id")
++
++
++def downgrade(connection):
++    # No safe downgrade path -- plan_id data is gone.
++    raise NotImplementedError("This migration is not reversible")
