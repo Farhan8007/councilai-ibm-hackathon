@@ -36,6 +36,10 @@ class BaseAgent(ABC):
         """
         return self._run_checks(diff, context)
 
+    def review(self, diff: str, context: Optional[str] = None) -> AgentResult:
+        """Public alias for run() — matches the interface expected by tests."""
+        return self._run_checks(diff, context)
+
     @abstractmethod
     def _run_checks(self, diff: str, context: Optional[str]) -> AgentResult:
         """Implement agent-specific checks. Must return AgentResult."""

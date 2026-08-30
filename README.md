@@ -76,7 +76,7 @@ councilai-ibm-hackathon/
 | Member | Role |
 |---|---|
 | Farhan | Backend / Agent Orchestration |
-| [Member 2] | Frontend / Testing / Demo |
+| [Fatima] | Frontend / Testing / Demo |
 
 ---
 

@@ -146,6 +146,16 @@ def app_client():
         setattr(models_mod, cls_name, mock.MagicMock())
     models_mod.get_db_session = mock.MagicMock(return_value=fake_session)
     models_mod.init_db = mock.MagicMock()
+
+    # backend/main.py imports Pydantic models from 'models'; add them to the stub.
+    import os as _os, importlib, importlib.util as _ilu
+    _backend_dir = _os.path.join(_os.path.dirname(__file__), "..", "backend")
+    _spec = _ilu.spec_from_file_location("_backend_models", _os.path.join(_backend_dir, "models.py"))
+    _bmod = _ilu.module_from_spec(_spec)
+    _spec.loader.exec_module(_bmod)
+    for _attr in ("AgentResult", "AgentRole", "HealthResponse", "ReviewRequest", "ReviewResponse"):
+        setattr(models_mod, _attr, getattr(_bmod, _attr))
+
     sys.modules["models"] = models_mod
 
     # Patch dotenv so main.py's load_dotenv() is a no-op
@@ -153,9 +163,18 @@ def app_client():
     dotenv_mod.load_dotenv = lambda: None
     sys.modules.setdefault("dotenv", dotenv_mod)
 
-    # Re-import main after stubs are in place
+    # Re-import main after stubs are in place.
+    # Always load the root main.py explicitly to avoid picking up backend/main.py
+    # when backend/ has been added to sys.path by other test modules.
     sys.modules.pop("main", None)
-    import main as council_main
+    import importlib.util as _main_ilu, os as _main_os
+    _main_spec = _main_ilu.spec_from_file_location(
+        "main",
+        _main_os.path.join(_main_os.path.dirname(__file__), "..", "main.py"),
+    )
+    council_main = _main_ilu.module_from_spec(_main_spec)
+    sys.modules["main"] = council_main
+    _main_spec.loader.exec_module(council_main)
 
     async def _fake_get_db():
         yield fake_session

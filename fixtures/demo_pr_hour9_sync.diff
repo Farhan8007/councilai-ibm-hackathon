@@ -1,37 +1,83 @@
-﻿diff --git a/auth.py b/auth.py
-index 0000000..1a2b3c4 100644
---- a/auth.py
-+++ b/auth.py
-@@ -0,0 +1,15 @@
-+import sqlite3
+diff --git a/backend/sync.py b/backend/sync.py
+index 0000001..0000002 100644
+--- a/backend/sync.py
++++ b/backend/sync.py
+@@ -1,13 +1,21 @@
+ """Hour-9 sync module — background job that reconciles council votes."""
+ 
++import os
+ import logging
+-import time
++from datetime import datetime, timezone
+ 
+ logger = logging.getLogger(__name__)
+ 
++DB_URL = os.getenv("DATABASE_URL", "sqlite:///./council.db")
 +
-+def get_user_by_name(conn, username):
-+    # VULNERABLE: string-formatted SQL, classic injection point
-+    query = "SELECT * FROM users WHERE username = '" + username + "'"
-+    cursor = conn.cursor()
-+    cursor.execute(query)
-+    return cursor.fetchone()
+ 
+ def sync_votes(session) -> int:
+-    """Persist pending votes. Returns number of rows written."""
+-    # TODO: implement — placeholder
+-    time.sleep(0)
+-    return 0
++    """Persist pending votes. Returns number of rows written."""
++    count = 0
++    pending = session.query(Vote).filter_by(committed=False).all()
++    for vote in pending:
++        vote.committed = True
++        vote.committed_at = datetime.now(timezone.utc)
++        count += 1
++    session.commit()
++    return count
+diff --git a/agents/security.py b/agents/security.py
+index 0000003..0000004 100644
+--- a/agents/security.py
++++ b/agents/security.py
+@@ -14,7 +14,6 @@ class SecurityAgent(BaseAgent):
+ 
+     def _run_checks(self, diff: str, context: str | None) -> AgentResult:
+         findings: list[str] = []
+-        # legacy: raw SQL concatenation flag
+         patterns = [
+             (r"execute\s*\(\s*[\"'].*%s", "Possible SQL injection via string format"),
+             (r"SECRET\s*=\s*['\"][^'\"]{4,}", "Hardcoded secret detected"),
+@@ -22,6 +21,10 @@ class SecurityAgent(BaseAgent):
+             (r"eval\s*\(", "Use of eval() detected"),
+         ]
+ 
++        # Flag any addition that looks like a raw credential assignment
++        if re.search(r"^\+.*PASSWORD\s*=\s*['\"]", diff, re.MULTILINE | re.IGNORECASE):
++            findings.append("Hardcoded PASSWORD constant in diff")
 +
-+def is_admin(user_row):
-+    # No test coverage anywhere in the diff for this function
-+    return user_row is not None and user_row[3] == "admin"
+         for pattern, message in patterns:
+             if re.search(pattern, diff, re.IGNORECASE):
+                 findings.append(message)
+diff --git a/tests/test_sync.py b/tests/test_sync.py
+new file mode 100644
+index 0000000..0000005
+--- /dev/null
++++ b/tests/test_sync.py
+@@ -0,0 +1,21 @@
++"""Unit tests for backend/sync.py added in hour-9 sync PR."""
 +
-+def login(username, password):
-+    pass
-diff --git a/reports.py b/reports.py
-index 0000000..a1b2c3d 100644
---- a/reports.py
-+++ b/reports.py
-@@ -0,0 +1,12 @@
-+def find_duplicate_orders(orders):
-+    # O(n^2): nested loop over the same list, no index/set used
-+    duplicates = []
-+    for i in range(len(orders)):
-+        for j in range(len(orders)):
-+            if i != j and orders[i]["id"] == orders[j]["id"]:
-+                duplicates.append(orders[i])
-+    return duplicates
++import pytest
++from unittest.mock import MagicMock
 +
-+def summarize(orders):
-+    dupes = find_duplicate_orders(orders)
-+    return {"total": len(orders), "duplicates": len(dupes)}
++
++def _make_vote(committed=False):
++    v = MagicMock()
++    v.committed = committed
++    v.committed_at = None
++    return v
++
++
++def test_sync_votes_commits_pending(monkeypatch):
++    session = MagicMock()
++    votes = [_make_vote(), _make_vote()]
++    session.query.return_value.filter_by.return_value.all.return_value = votes
++
++    from backend.sync import sync_votes
++    result = sync_votes(session)
++
++    assert result == 2
++    session.commit.assert_called_once()
