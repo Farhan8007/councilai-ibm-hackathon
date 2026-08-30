@@ -23,21 +23,8 @@ class BaseAgent(ABC):
     def __init__(self, watsonx_client=None):
         self._client = watsonx_client
 
-    def run(self, diff: str, context: Optional[str] = None) -> AgentResult:
-        """
-        Run the agent against a unified diff.
-
-        Args:
-            diff: Raw unified diff text (from the diff pipeline)
-            context: Optional extra context string
-
-        Returns:
-            AgentResult with decision, findings, and raw output
-        """
-        return self._run_checks(diff, context)
-
     def review(self, diff: str, context: Optional[str] = None) -> AgentResult:
-        """Public alias for run() — matches the interface expected by tests."""
+        """Run the agent against a unified diff and return a structured result."""
         return self._run_checks(diff, context)
 
     @abstractmethod

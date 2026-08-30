@@ -8,9 +8,10 @@ Falls back to deterministic heuristics when no client is available
 
 from __future__ import annotations
 
+import json
+import os
 import re
 import sys
-import os
 
 _root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _backend = os.path.join(_root, "backend")
@@ -21,7 +22,7 @@ for _p in (_backend, _services):
 
 from base import BaseAgent
 from models import AgentResult, AgentRole
-from watsonx_client import WatsonxClient
+from watsonx_client import WatsonxClient  # used when watsonx_client is injected
 
 SYSTEM_PROMPT = """You are the Testing specialist in the CouncilAI multi-agent code review pipeline.
 Analyse the unified diff and identify test-quality issues in ADDED lines (+) only.
@@ -46,7 +47,6 @@ If no issues found: {"passed": true, "findings": [], "raw_output": "No testing c
 
 _SKIP_RE = re.compile(r"\bpytest\.skip\b|\bunittest\.skip\b|assert\s+False\b")
 _BARE_EXCEPT_RE = re.compile(r"^\s*except\s*(Exception\s*)?:\s*$")
-_BARE_EXCEPT_PASS_RE = re.compile(r"^\s*except\s*(Exception\s*)?:\s*\n?\s*pass\s*$")
 _FILE_HEADER_RE = re.compile(r"^(\+\+\+|---)\s+(\S+)")
 
 
@@ -75,7 +75,6 @@ class TestingAgent(BaseAgent):
         prompt = f"{SYSTEM_PROMPT}\n\nDiff to review:\n{diff}"
         try:
             raw = self._client.generate(prompt=prompt, max_new_tokens=400, temperature=0.1)
-            import json
             match = re.search(r'\{.*\}', raw, re.DOTALL)
             if not match:
                 raise ValueError(f"No JSON in response: {raw}")
